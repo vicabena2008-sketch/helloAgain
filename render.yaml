@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: helloagain-ai
+    runtime: python
+    plan: starter          # starter = 512 MB RAM — required for torch + sentence-transformers
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:application --workers 1 --threads 2 --timeout 120 --bind 0.0.0.0:$PORT
+    healthCheckPath: /
+    autoDeploy: true       # auto-deploys on every push to the connected branch
+
+    # Persistent disk — keeps your SQLite DB alive across restarts & re-deploys
+    disk:
+      name: helloagain-data
+      mountPath: /data
+      sizeGB: 1
+
+    envVars:
+      # ── Required ──────────────────────────────────────────────────────────────
+      - key: GROQ_API_KEY
+        sync: false        # fill this in manually in the Render dashboard
+
+      # ── Database ──────────────────────────────────────────────────────────────
+      - key: DB_PATH
+        value: /data/helloagain.db
+
+      # ── Security — Render will auto-generate these for you ───────────────────
+      - key: SECRET_KEY
+        generateValue: true
+
+      - key: ADMIN_SECRET_KEY
+        generateValue: true
+
+      # ── Admin credentials — change these in the Render dashboard ─────────────
+      - key: ADMIN_USERNAME
+        value: admin
+
+      - key: ADMIN_PASSWORD
+        sync: false        # set your own password in the Render dashboard
+
+      # ── Python / Gunicorn optimisation ────────────────────────────────────────
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
