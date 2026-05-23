@@ -7,10 +7,12 @@ from retrieval import retrieve_context, split_by_stock
 from llm import llm, SYSTEM_PROMPT
 from conversation import ConversationState, build_followup_instruction
 from db.customers import upsert_customer, log_message, increment_turns, tag_customer
+import logging
+import groq
 
 SAFETY_NET_QUESTIONS = {
     "tech":    " Anything else you need — accessories or delivery info?",
-    "fashion": " Would you like to see matching footwear or accessories?",
+    "fashion": " Wouldu you like to see matching footwear or accessories?",
     "food":    " Do you need wholesale pricing or event packaging too?",
     "home":    " Would you like details on warranty or payment options?",
     "beauty":  " Would you like a skincare or beauty bundle recommendation?",
@@ -67,10 +69,23 @@ Customer: {user_query}
 HelloAgain:"""
 
     # 6. LLM call
-    response_obj = llm.invoke(full_prompt)
-    reply = response_obj.content.strip()
+    try:
+        response_obj = llm.invoke(full_prompt)
+        reply = response_obj.content.strip()
+    except groq.NotFoundError as nf:
+        logging.exception("LLM model not found or inaccessible")
+        return (
+            "Sorry — the configured language model is not available to this application. "
+            "Please check the GROQ_MODEL setting or your Groq account access."
+        )
+    except Exception as e:
+        logging.exception("LLM invocation failed")
+        return "Sorry — an internal error occurred while generating a reply. Please try again later."
 
-    # 7. (Removed trimming logic, LLM handles brevity via bubbles)
+    # 7. Trim if too long
+    sentences = [s.strip() for s in reply.replace("\n", " ").split(". ") if s.strip()]
+    if len(sentences) > 7:
+        reply = ". ".join(sentences[:6]) + "."
 
     # 8. Safety net — ensure reply ends with a follow-up
     if "?" not in reply:

@@ -21,8 +21,8 @@ print(f"[llm] Using Groq model: {GROQ_MODEL}")
 
 llm = ChatGroq(
   model=GROQ_MODEL,
-  temperature=0.65,
-  max_tokens=350,
+  temperature=0.55,
+  max_tokens=600,
   api_key=GROQ_API_KEY,
 )
 
