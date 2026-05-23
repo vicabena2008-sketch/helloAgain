@@ -8,6 +8,13 @@ from datetime import datetime, timezone, timedelta
 
 DB_PATH = os.environ.get("DB_PATH", "helloagain.db")
 
+# Ensure the directory exists only when DB_PATH contains an explicit directory
+# component (e.g. "/data/helloagain.db").  When it is a bare filename the
+# dirname is just cwd, which already exists and may be read-only on Render.
+_db_dir = os.path.dirname(DB_PATH)  # empty string when no dir component
+if _db_dir:
+    os.makedirs(_db_dir, exist_ok=True)
+
 
 def _conn():
     con = sqlite3.connect(DB_PATH, check_same_thread=False)
