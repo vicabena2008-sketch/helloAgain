@@ -19,7 +19,7 @@ numpy>=1.26.4
 
 # ── PyTorch CPU-only (avoids downloading the massive CUDA build on Render) ──────
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.2.2+cpu
+torch
 
 # ── Hugging Face ───────────────────────────────────────────────────────────────
 huggingface-hub>=0.24.7
