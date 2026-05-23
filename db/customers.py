@@ -4,16 +4,43 @@ db/customers.py — HelloAgain customer store with analytics support.
 
 import sqlite3
 import os
+import tempfile
 from datetime import datetime, timezone, timedelta
 
-DB_PATH = os.environ.get("DB_PATH", "helloagain.db")
+# ── Resolve a writable DB path ────────────────────────────────────────────────
+# Priority:
+#   1. $DB_PATH env var (e.g. /data/helloagain.db on Render with a disk)
+#   2. Fallback to /tmp/<basename> when the configured directory can't be
+#      created (e.g. Render free plan with no persistent disk attached).
+# Data stored in /tmp is lost on restart — the app still boots correctly.
 
-# Ensure the directory exists only when DB_PATH contains an explicit directory
-# component (e.g. "/data/helloagain.db").  When it is a bare filename the
-# dirname is just cwd, which already exists and may be read-only on Render.
-_db_dir = os.path.dirname(DB_PATH)  # empty string when no dir component
+_configured = os.environ.get("DB_PATH", "helloagain.db")
+_db_dir = os.path.dirname(_configured)  # empty string for bare filenames
+
 if _db_dir:
-    os.makedirs(_db_dir, exist_ok=True)
+    if os.path.isdir(_db_dir):
+        # Directory already exists (disk is mounted) — use it as-is.
+        DB_PATH = _configured
+    else:
+        try:
+            os.makedirs(_db_dir, exist_ok=True)
+            DB_PATH = _configured
+        except (PermissionError, OSError) as _exc:
+            # Persistent disk not mounted (free plan or first-time deploy).
+            # Fall back to a temp file so the app can still start.
+            _fallback = os.path.join(
+                tempfile.gettempdir(), os.path.basename(_configured)
+            )
+            print(
+                f"[WARNING] Cannot create DB directory '{_db_dir}': {_exc}\n"
+                f"[WARNING] Falling back to '{_fallback}'. "
+                "Data will NOT persist across restarts.\n"
+                "[WARNING] Add a Persistent Disk in your Render dashboard "
+                "and set DB_PATH=/data/helloagain.db to fix this."
+            )
+            DB_PATH = _fallback
+else:
+    DB_PATH = _configured
 
 
 def _conn():

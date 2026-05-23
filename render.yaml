@@ -8,11 +8,11 @@ services:
     healthCheckPath: /
     autoDeploy: true       # auto-deploys on every push to the connected branch
 
-    # Persistent disk — keeps your SQLite DB alive across restarts & re-deploys
-    disk:
-      name: helloagain-data
-      mountPath: /data
-      sizeGB: 1
+    # Free plan does not support persistent disks. Data will reset on restarts.
+    # disk:
+    #   name: helloagain-data
+    #   mountPath: /data
+    #   sizeGB: 1
 
     envVars:
       # ── Required ──────────────────────────────────────────────────────────────
@@ -21,7 +21,7 @@ services:
 
       # ── Database ──────────────────────────────────────────────────────────────
       - key: DB_PATH
-        value: /data/helloagain.db
+        value: helloagain.db
 
       # ── Security — Render will auto-generate these for you ───────────────────
       - key: SECRET_KEY
