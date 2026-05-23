@@ -47,9 +47,14 @@ def api_chat():
     img_match = re.search(r'!\[([^\]]*)\]\(([^)]+)\)', reply_text)
     if img_match:
         image_url  = img_match.group(2)
-        reply_text = reply_text[:img_match.start()].strip()
+        reply_text = reply_text[:img_match.start()] + reply_text[img_match.end():]
 
-    return jsonify({"reply": reply_text, "image_url": image_url})
+    # Split into bubbles
+    bubbles = [b.strip() for b in reply_text.split("---") if b.strip()]
+    if not bubbles:
+        bubbles = ["Sorry, I didn't quite catch that."]
+
+    return jsonify({"replies": bubbles, "image_url": image_url})
 
 
 @app.route("/api/clear", methods=["POST"])

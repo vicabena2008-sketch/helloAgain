@@ -195,16 +195,46 @@ def get_conversation(session_id: str):
 
 def get_analytics():
     with _conn() as con:
-        total     = con.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
-        hot       = con.execute("SELECT COUNT(*) FROM customers WHERE tag='hot'").fetchone()[0]
-        warm      = con.execute("SELECT COUNT(*) FROM customers WHERE tag='warm'").fetchone()[0]
-        converted = con.execute("SELECT COUNT(*) FROM customers WHERE tag='converted'").fetchone()[0]
-        silent    = len(get_silent_customers(24))
+        total      = con.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+        hot        = con.execute("SELECT COUNT(*) FROM customers WHERE tag='hot'").fetchone()[0]
+        warm       = con.execute("SELECT COUNT(*) FROM customers WHERE tag='warm'").fetchone()[0]
+        converted  = con.execute("SELECT COUNT(*) FROM customers WHERE tag='converted'").fetchone()[0]
+        vip        = con.execute("SELECT COUNT(*) FROM customers WHERE tag='vip'").fetchone()[0]
+        inactive   = con.execute("SELECT COUNT(*) FROM customers WHERE tag='inactive'").fetchone()[0]
+        silent     = len(get_silent_customers(24))
         with_phone = con.execute("SELECT COUNT(*) FROM customers WHERE phone IS NOT NULL AND phone != ''").fetchone()[0]
+        # average turns (nullable)
+        avg_turns = con.execute("SELECT AVG(turn_count) FROM customers").fetchone()[0] or 0
+        try:
+            avg_turns = round(float(avg_turns), 1)
+        except Exception:
+            avg_turns = 0
+
+        percent_converted = round((converted / total) * 100, 1) if total else 0
+
+        # daily active: customers seen in the last 24 hours
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+        daily_active = con.execute("SELECT COUNT(*) FROM customers WHERE last_seen >= ?", (cutoff,)).fetchone()[0]
+
+        # top topics
+        rows = con.execute(
+            "SELECT topic, COUNT(*) as c FROM customers WHERE topic IS NOT NULL AND topic != '' GROUP BY topic ORDER BY c DESC LIMIT 5"
+        ).fetchall()
+        top_topics = [ {"topic": r[0], "count": r[1]} for r in rows ]
+
         return {
-            "total": total, "hot": hot, "warm": warm,
-            "converted": converted, "silent": silent,
+            "total": total,
+            "hot": hot,
+            "warm": warm,
+            "converted": converted,
+            "vip": vip,
+            "inactive": inactive,
+            "silent": silent,
             "with_phone": with_phone,
+            "avg_turns": avg_turns,
+            "percent_converted": percent_converted,
+            "daily_active": daily_active,
+            "top_topics": top_topics,
         }
 
 

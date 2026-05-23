@@ -70,10 +70,7 @@ HelloAgain:"""
     response_obj = llm.invoke(full_prompt)
     reply = response_obj.content.strip()
 
-    # 7. Trim if too long
-    sentences = [s.strip() for s in reply.replace("\n", " ").split(". ") if s.strip()]
-    if len(sentences) > 7:
-        reply = ". ".join(sentences[:6]) + "."
+    # 7. (Removed trimming logic, LLM handles brevity via bubbles)
 
     # 8. Safety net — ensure reply ends with a follow-up
     if "?" not in reply:

@@ -200,7 +200,11 @@ async function loadAll() {
 }
 
 async function loadMetrics() {
-  const res = await fetch('/admin/api/analytics'); const a = await res.json();
+  const res = await fetch('/api/analytics'); const a = await res.json();
+  const topicsHtml = (a.top_topics && a.top_topics.length)
+    ? ('<div style="font-weight:700;margin-bottom:6px;">Top Topics</div>' + a.top_topics.map(t=>`<div style="font-size:0.9rem;color:var(--text-muted)">${t.topic} <span style="float:right;font-weight:800">${t.count}</span></div>`).join(''))
+    : '<div class="empty-state">No topics</div>';
+
   const html = `
     <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-users"></i> Total</div><div class="metric-val">${a.total}</div></div>
     <div class="metric-card mc-hot"><div class="metric-label"><i class="fa-solid fa-fire"></i> Hot</div><div class="metric-val">${a.hot}</div></div>
@@ -208,6 +212,12 @@ async function loadMetrics() {
     <div class="metric-card mc-conv"><div class="metric-label"><i class="fa-solid fa-check"></i> Converted</div><div class="metric-val">${a.converted}</div></div>
     <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-clock"></i> Silent >24h</div><div class="metric-val">${a.silent}</div></div>
     <div class="metric-card"><div class="metric-label"><i class="fa-brands fa-whatsapp"></i> W/ Phone</div><div class="metric-val">${a.with_phone}</div></div>
+    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-chart-line"></i> Avg Turns</div><div class="metric-val">${a.avg_turns}</div></div>
+    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-star"></i> VIP</div><div class="metric-val">${a.vip}</div></div>
+    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-user-slash"></i> Inactive</div><div class="metric-val">${a.inactive}</div></div>
+    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-percent"></i> Converted %</div><div class="metric-val">${a.percent_converted}%</div></div>
+    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-calendar-day"></i> Active 24h</div><div class="metric-val">${a.daily_active}</div></div>
+    <div class="metric-card" style="grid-column:span 2;">${topicsHtml}</div>
   `;
   document.getElementById('metricsGrid').innerHTML = html;
 }
@@ -220,7 +230,7 @@ let allCustomersData = [];
 let customersVisibleCount = 10;
 
 async function loadCustomers() {
-  const res = await fetch('/admin/api/customers'); 
+  const res = await fetch('/api/customers'); 
   allCustomersData = await res.json();
   
   // LIFO sort
@@ -272,7 +282,7 @@ function viewMoreCustomers() {
 }
 
 async function loadSilent() {
-  const res = await fetch('/admin/api/silent'); const list = await res.json();
+  const res = await fetch('/api/silent'); const list = await res.json();
   const tb = document.getElementById('silentTbody');
   tb.innerHTML = '';
   if(!list.length) { tb.innerHTML = '<tr><td colspan="6" class="empty-state">No silent customers right now.</td></tr>'; return; }
@@ -290,7 +300,7 @@ async function loadSilent() {
 }
 
 async function selectCustomer(prefix) {
-  const res = await fetch(`/admin/api/customer/${prefix}`);
+  const res = await fetch(`/api/customer/${prefix}`);
   if(!res.ok) return showToast("Failed to load customer");
   const data = await res.json();
   
@@ -360,7 +370,7 @@ document.getElementById('txtFollowup').addEventListener('input', (e) => {
 async function saveTag() {
   if(!currentSession) return;
   const tag = document.getElementById('tagSelect').value;
-  await fetch('/admin/api/tag', { method:'POST', body: JSON.stringify({session_prefix: currentSession, tag}) });
+  await fetch('/api/tag', { method:'POST', body: JSON.stringify({session_prefix: currentSession, tag}) });
   showToast("Tag updated");
   loadAll();
 }
@@ -369,7 +379,7 @@ async function saveInfo() {
   if(!currentSession) return;
   const name = document.getElementById('inpName').value;
   const phone = document.getElementById('inpPhone').value;
-  await fetch('/admin/api/save', { method:'POST', body: JSON.stringify({session_prefix: currentSession, name, phone}) });
+  await fetch('/api/save', { method:'POST', body: JSON.stringify({session_prefix: currentSession, name, phone}) });
   showToast("Info saved");
   updateWaLink(phone, document.getElementById('txtFollowup').value);
   loadAll();
@@ -377,7 +387,7 @@ async function saveInfo() {
 
 async function markSent(prefix, e) {
   e.stopPropagation();
-  await fetch('/admin/api/mark-sent', { method:'POST', body: JSON.stringify({session_prefix: prefix}) });
+  await fetch('/api/mark-sent', { method:'POST', body: JSON.stringify({session_prefix: prefix}) });
   showToast("Marked as sent");
   loadAll();
 }
