@@ -11,13 +11,19 @@ load_dotenv()
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 if not GROQ_API_KEY:
-    raise EnvironmentError("GROQ_API_KEY is not set. Add it to your .env file or Render env vars.")
+  raise EnvironmentError("GROQ_API_KEY is not set. Add it to your .env file or Render env vars.")
+
+# Allow overriding the model via env var so deployments can pick a model
+# the account actually has access to (avoid hardcoding unavailable models).
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+
+print(f"[llm] Using Groq model: {GROQ_MODEL}")
 
 llm = ChatGroq(
-    model="llama-3.1-70b",
-    temperature=0.65,
-    max_tokens=350,
-    api_key=GROQ_API_KEY,
+  model=GROQ_MODEL,
+  temperature=0.65,
+  max_tokens=350,
+  api_key=GROQ_API_KEY,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
