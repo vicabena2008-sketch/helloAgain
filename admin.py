@@ -13,7 +13,9 @@ load_dotenv()
 from db.customers import (
     get_all_customers, get_conversation, tag_customer,
     get_analytics, get_silent_customers, mark_followup_sent,
-    update_customer_info,
+    update_customer_info, get_all_kb_items, add_kb_item,
+    update_kb_item, delete_kb_item, get_whatsapp_settings,
+    save_whatsapp_settings
 )
 
 app = Flask(__name__)
@@ -185,6 +187,132 @@ def api_mark_sent():
         return jsonify({"error": "Not found"}), 404
     mark_followup_sent(match["session_id"])
     return jsonify({"ok": True, "message": "Follow-up marked as sent."})
+
+
+# ── Knowledge Base CRUD Endpoints ──────────────────────────────────────────────
+@app.route("/api/kb", methods=["GET", "POST"])
+@login_required
+def api_kb():
+    if request.method == "POST":
+        data = request.get_json(force=True) or {}
+        cat = (data.get("category") or "").strip().lower()
+        brand = (data.get("brand") or "").strip()
+        in_stock = bool(data.get("in_stock", True))
+        try:
+            stock_count = int(data["stock_count"]) if data.get("stock_count") not in (None, "") else None
+        except Exception:
+            stock_count = None
+        img_url = (data.get("image_url") or "").strip() or None
+        content = (data.get("content") or "").strip()
+
+        if not cat or not brand or not content:
+            return jsonify({"error": "Category, brand, and details are required."}), 400
+
+        item_id = add_kb_item(cat, brand, in_stock, stock_count, img_url, content)
+        
+        # Rebuild AI semantic vector store instantly!
+        import retrieval
+        retrieval.rebuild_index()
+
+        return jsonify({"ok": True, "id": item_id, "message": "Product added. AI context index rebuilt."})
+    
+    return jsonify(get_all_kb_items())
+
+
+@app.route("/api/kb/<int:item_id>", methods=["PUT", "DELETE"])
+@login_required
+def api_kb_item(item_id):
+    if request.method == "DELETE":
+        delete_kb_item(item_id)
+        
+        # Rebuild AI semantic vector store instantly!
+        import retrieval
+        retrieval.rebuild_index()
+        
+        return jsonify({"ok": True, "message": "Product deleted. AI context index rebuilt."})
+    
+    data = request.get_json(force=True) or {}
+    cat = (data.get("category") or "").strip().lower()
+    brand = (data.get("brand") or "").strip()
+    in_stock = bool(data.get("in_stock", True))
+    try:
+        stock_count = int(data["stock_count"]) if data.get("stock_count") not in (None, "") else None
+    except Exception:
+        stock_count = None
+    img_url = (data.get("image_url") or "").strip() or None
+    content = (data.get("content") or "").strip()
+
+    if not cat or not brand or not content:
+        return jsonify({"error": "Category, brand, and details are required."}), 400
+
+    update_kb_item(item_id, cat, brand, in_stock, stock_count, img_url, content)
+    
+    # Rebuild AI semantic vector store instantly!
+    import retrieval
+    retrieval.rebuild_index()
+
+    return jsonify({"ok": True, "message": "Product updated. AI context index rebuilt."})
+
+
+# ── WhatsApp settings simulated endpoints ─────────────────────────────────────
+@app.route("/api/whatsapp/simulate", methods=["POST"])
+@login_required
+def api_whatsapp_simulate():
+    data = request.get_json(force=True) or {}
+    phone = (data.get("phone") or "").strip()
+    msg_text = (data.get("message") or "").strip()
+    
+    if not phone or not msg_text:
+        return jsonify({"error": "Phone and message are required."}), 400
+        
+    cleaned_phone = phone.replace("+", "").replace(" ", "").replace("-", "")
+    session_id = f"wa-{cleaned_phone}"
+    
+    from chat import chat as ai_chat
+    from conversation import ConversationState
+    
+    state = ConversationState()
+    state.session_id = session_id
+    
+    from db.customers import get_customer, get_conversation, update_customer_info
+    existing = get_customer(session_id)
+    if existing:
+        state.name = existing.get("name") or ""
+        state.phone = existing.get("phone") or cleaned_phone
+        state.last_topic = existing.get("topic") or ""
+        state.budget_mentioned = existing.get("budget") or ""
+        state.turn_count = existing.get("turn_count", 0)
+        history = get_conversation(session_id)
+        for m in history:
+            state.turns.append((m["role"], m["content"]))
+            
+    reply_text = ai_chat(msg_text, state)
+    
+    # Ensure phone number is saved explicitly
+    update_customer_info(session_id, phone=phone)
+    
+    return jsonify({
+        "ok": True,
+        "session_id": session_id,
+        "reply": reply_text
+    })
+
+
+@app.route("/api/whatsapp-settings", methods=["GET", "POST"])
+@login_required
+def api_whatsapp_settings():
+    if request.method == "POST":
+        data = request.get_json(force=True) or {}
+        save_whatsapp_settings(data)
+        return jsonify({"ok": True, "message": "WhatsApp credentials saved."})
+    
+    settings = get_whatsapp_settings()
+    settings.setdefault("webhook_url", request.url_root.rstrip("/") + "api/whatsapp/webhook")
+    settings.setdefault("verify_token", "helloagain_token_2026")
+    settings.setdefault("phone_number_id", "")
+    settings.setdefault("access_token", "")
+    settings.setdefault("live_mode", "0")
+    return jsonify(settings)
 
 
 if __name__ == "__main__":

@@ -3,195 +3,896 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>HelloAgain AI — Admin Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<title>HelloAgain AI — Enterprise Control Room</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
 :root {
-  --bg-main: #f0f4f8;
-  --bg-card: #ffffff;
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --text-main: #1e293b;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
+  --bg-main: #06050b;
+  --bg-card: rgba(14, 13, 30, 0.6);
+  --bg-card-hover: rgba(22, 21, 46, 0.85);
+  --bg-input: rgba(255, 255, 255, 0.04);
+  --bg-input-focus: rgba(255, 255, 255, 0.08);
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-glow: rgba(99, 102, 241, 0.3);
+  --accent: #d946ef;
+  --accent-hover: #c084fc;
+  --accent-glow: rgba(217, 70, 239, 0.2);
+  --success: #10b981;
+  --success-glow: rgba(16, 185, 129, 0.2);
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-active: rgba(99, 102, 241, 0.4);
 }
+
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: radial-gradient(circle at 50% 0%, #171235 0%, #06050b 70%);
   background-color: var(--bg-main);
   color: var(--text-main);
-  padding: 20px;
-  padding-bottom: 60px;
+  min-height: 100vh;
+  padding: 24px;
+  overflow-y: scroll;
 }
-.container { max-width: 1200px; margin: 0 auto; }
+.container { max-width: 1300px; margin: 0 auto; }
+
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-main); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* ── Glass Container Styles ── */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  margin-bottom: 24px;
+  transition: border-color 0.3s, transform 0.2s;
+}
 
 /* ── Header ── */
 .admin-header {
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%);
-  border-radius: 14px; margin-bottom: 24px; box-shadow: 0 6px 20px rgba(49,46,129,0.2);
-  display: flex; justify-content: space-between; align-items: center; padding: 24px 32px;
-  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 32px;
+  background: linear-gradient(135deg, rgba(30,27,75,0.7) 0%, rgba(15,12,41,0.7) 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
-.header-titles h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; display:flex; align-items:center; gap:10px; }
-.header-titles p { font-size: 0.9rem; color: #c7d2fe; }
-.header-actions { display: flex; gap: 12px; align-items: center; }
-.badge-private { background: rgba(251,191,36,0.15); border: 1px solid #f59e0b; color: #fde68a; padding: 6px 12px; border-radius: 99px; font-size: 0.8rem; font-weight: 600; }
-.btn-logout { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size:0.85rem; transition:0.2s; }
-.btn-logout:hover { background: rgba(255,255,255,0.2); }
+.header-titles h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #fff 0%, #c7d2fe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-titles p { font-size: 0.9rem; color: var(--text-muted); margin-top: 4px; }
+.header-actions { display: flex; gap: 14px; align-items: center; }
+.badge-private {
+  background: rgba(217, 70, 239, 0.1);
+  border: 1px solid rgba(217, 70, 239, 0.3);
+  color: #f472b6;
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 12px rgba(217, 70, 239, 0.15);
+}
+.btn-logout {
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  border: 1px solid var(--border);
+  padding: 8px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-logout:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.1);
+}
 
-/* ── Cards & Layout ── */
-.section { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 24px; overflow: hidden; }
-.sec-header { background: #f8fafc; padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.sec-title { font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; gap: 10px; }
-.sec-title i { color: var(--primary); }
-.sec-body { padding: 24px; }
-.btn { background: var(--primary); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: 0.2s; }
-.btn:hover { background: var(--primary-hover); }
-.btn-sec { background: #e2e8f0; color: #475569; }
-.btn-sec:hover { background: #cbd5e1; }
+/* ── Tab Bar Navigation ── */
+.tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: rgba(255,255,255,0.02);
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+.tab-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tab-btn:hover {
+  color: var(--text-main);
+  background: rgba(255,255,255,0.04);
+}
+.tab-btn.active {
+  color: #fff;
+  background: var(--primary);
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+/* ── Content View Blocks ── */
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeInUp 0.4s ease-out; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ── Metrics Grid ── */
-.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
-.metric-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-.metric-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-.metric-val { font-size: 2rem; font-weight: 800; }
-.mc-hot .metric-val { color: #ef4444; } .mc-warm .metric-val { color: #f59e0b; } .mc-conv .metric-val { color: #10b981; }
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.metric-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+.metric-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-active);
+  background: rgba(255, 255, 255, 0.04);
+}
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 4px; height: 100%;
+  background: var(--primary);
+}
+.metric-card.mc-hot::before { background: var(--danger); }
+.metric-card.mc-warm::before { background: var(--warning); }
+.metric-card.mc-conv::before { background: var(--success); }
+.metric-card.mc-revenue::before { background: #eab308; }
+.metric-card.mc-revenue {
+  background: linear-gradient(135deg, rgba(234,179,8,0.08) 0%, rgba(255,255,255,0.02) 100%);
+  border-color: rgba(234, 179, 8, 0.25);
+  grid-column: span 2;
+}
+.metric-card.mc-revenue:hover {
+  border-color: rgba(234, 179, 8, 0.5);
+  box-shadow: 0 0 15px rgba(234, 179, 8, 0.08);
+}
+.metric-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.metric-val {
+  font-size: 1.8rem;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  margin-top: 4px;
+}
+.mc-hot .metric-val { color: var(--danger); text-shadow: 0 0 10px rgba(239,68,68,0.15); }
+.mc-warm .metric-val { color: var(--warning); text-shadow: 0 0 10px rgba(245,158,11,0.15); }
+.mc-conv .metric-val { color: var(--success); text-shadow: 0 0 10px rgba(16,185,129,0.15); }
+.mc-revenue .metric-val { color: #facc15; text-shadow: 0 0 15px rgba(250,204,21,0.25); font-size: 2.2rem; }
 
-/* ── Tables ── */
-.table-wrapper { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-th { background: #f1f5f9; text-align: left; padding: 12px 16px; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid var(--border); white-space: nowrap; }
-td { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-tr:hover { background: #f8fafc; cursor: pointer; }
-.tag-badge { padding: 4px 10px; border-radius: 99px; font-weight: 700; font-size: 0.75rem; color: #fff; display: inline-block; }
-.tag-new { background: #3b82f6; } .tag-warm { background: #f59e0b; } .tag-hot { background: #ef4444; } .tag-inactive { background: #64748b; } .tag-converted { background: #10b981; } .tag-vip { background: #8b5cf6; }
+/* ── Interactive Actions ── */
+.btn {
+  background: var(--primary);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+.btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+}
+.btn-sec {
+  background: rgba(255,255,255,0.06);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+.btn-sec:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: none;
+}
+.btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  box-shadow: none;
+}
+.btn-danger:hover {
+  background: var(--danger);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+/* ── Table Design ── */
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; background: rgba(0,0,0,0.1); }
+th {
+  background: rgba(255,255,255,0.02);
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.5px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+td { padding: 14px 18px; border-bottom: 1px solid var(--border); }
+tr { transition: background 0.15s; }
+tbody tr:hover { background: rgba(255,255,255,0.02); cursor: pointer; }
+.tag-badge {
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 0.72rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase;
+}
+.tag-new { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; }
+.tag-warm { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; }
+.tag-hot { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; }
+.tag-inactive { background: rgba(148, 163, 184, 0.15); border: 1px solid rgba(148, 163, 184, 0.3); color: #cbd5e1; }
+.tag-converted { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; }
+.tag-vip { background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); color: #a78bfa; }
+
+/* ── Panel Controls Header ── */
+.panel-ctrl {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.panel-ctrl-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-ctrl-title i { color: var(--primary); }
+
+.search-field {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 320px;
+  width: 100%;
+}
+.search-field input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.85rem;
+  width: 100%;
+}
+.search-field i { color: var(--text-muted); }
+
+/* ── Form Styling ── */
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.form-control {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: #fff;
+  transition: all 0.2s;
+}
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--bg-input-focus);
+  box-shadow: 0 0 10px rgba(99,102,241,0.15);
+}
+textarea.form-control { resize: vertical; min-height: 80px; }
 
 /* ── Customer Detail Grid ── */
-.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
-.form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; }
-.form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
-textarea.form-control { resize: vertical; min-height: 80px; }
-.chat-log { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; height: 350px; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-.msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.85rem; line-height: 1.5; }
-.msg-user { background: #e2e8f0; align-self: flex-start; border-bottom-left-radius: 2px; }
-.msg-ai { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; }
-.msg-time { font-size: 0.65rem; opacity: 0.7; margin-top: 4px; display: block; }
-.empty-state { text-align: center; color: var(--text-muted); padding: 40px; font-size: 0.9rem; }
-.toast { position: fixed; bottom: 20px; right: 20px; background: #334155; color: #fff; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; z-index: 100; font-size: 0.85rem; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 24px; }
+.chat-log {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  height: 380px;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.85rem; line-height: 1.55; position: relative; }
+.msg-user { background: rgba(255,255,255,0.08); align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid rgba(255,255,255,0.05); }
+.msg-ai { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; box-shadow: 0 4px 12px rgba(99,102,241,0.2); }
+.msg-time { font-size: 0.65rem; opacity: 0.65; margin-top: 5px; display: block; text-align: right; }
 
-@media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
+.lead-score-gauge {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.lead-score-circle {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.1rem;
+  border: 3.5px solid var(--primary);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+/* ── Knowledge Base Catalog Tab ── */
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+.catalog-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.25s;
+  display: flex;
+  flex-direction: column;
+}
+.catalog-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-active);
+  background: var(--bg-card-hover);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+}
+.catalog-card-image {
+  height: 150px;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(255,255,255,0.02);
+  position: relative;
+}
+.catalog-card-badge {
+  position: absolute;
+  top: 10px; right: 10px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.ccb-instock { background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.3); color: #10b981; }
+.ccb-oos { background: rgba(239,68,68,0.18); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
+.catalog-card-cat {
+  font-size: 0.68rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin: 14px 16px 4px;
+}
+.catalog-card-brand {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 16px 8px;
+}
+.catalog-card-content {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0 16px 14px;
+  flex: 1;
+}
+.catalog-card-footer {
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ── Webhook Simulator Pane ── */
+.whatsapp-sim-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.sim-phone-frame {
+  background: #090812;
+  border: 8px solid #1a1936;
+  border-radius: 36px;
+  height: 520px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  position: relative;
+}
+.sim-phone-header {
+  background: #15142d;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sim-phone-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; color: #fff;
+}
+.sim-phone-title { font-weight: 700; font-size: 0.85rem; }
+.sim-phone-status { font-size: 0.65rem; color: var(--success); }
+.sim-phone-body {
+  flex: 1; overflow-y: auto; padding: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+  background: radial-gradient(circle at center, #110e2e 0%, #06050b 100%);
+}
+.sim-phone-input-bar {
+  background: #111025;
+  padding: 12px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  display: flex; gap: 8px;
+}
+.sim-msg {
+  max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 0.78rem; line-height: 1.45;
+}
+.sim-msg-user { background: #056162; align-self: flex-end; border-bottom-right-radius: 2px; }
+.sim-msg-ai { background: #262d31; align-self: flex-start; border-bottom-left-radius: 2px; }
+
+/* ── Modal Dialog ── */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s ease-out;
+}
+.modal-box {
+  background: #0d0c18;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  padding: 28px;
+  max-width: 520px;
+  width: 90%;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+}
+.modal-title { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.3rem; }
+.modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; }
+.modal-close:hover { color: #fff; }
+
+.empty-state { text-align: center; color: var(--text-muted); padding: 40px; font-size: 0.9rem; }
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: rgba(15, 23, 42, 0.95);
+  color: #fff; border: 1px solid var(--border-active);
+  padding: 14px 24px; border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  display: none; z-index: 10000; font-size: 0.85rem;
+  font-weight: 600; animation: slideInRight 0.3s ease-out;
+}
+@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+@media (max-width: 900px) {
+  .detail-grid, .whatsapp-sim-layout { grid-template-columns: 1fr; }
+}
 @media (max-width: 600px) {
   .admin-header { flex-direction: column; text-align: center; gap: 16px; padding: 20px; }
   .header-actions { justify-content: center; width: 100%; }
-  .sec-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+  .panel-ctrl { flex-direction: column; gap: 12px; align-items: flex-start; }
   .metrics-grid { grid-template-columns: 1fr 1fr; }
-}
-@media (max-width: 400px) {
-  .metrics-grid { grid-template-columns: 1fr; }
+  .mc-revenue { grid-column: span 2; }
 }
 </style>
 </head>
 <body>
 <div class="container">
   
+  <!-- ── Header ── -->
   <div class="admin-header">
     <div class="header-titles">
-      <h1><i class="fa-solid fa-shield-halved" style="color:#a5b4fc;"></i> HelloAgain AI</h1>
-      <p>Customer Intelligence & Lead Management</p>
+      <h1><i class="fa-solid fa-brain" style="color:var(--primary);"></i> HelloAgain AI</h1>
+      <p>B2B SaaS Enterprise Control Panel · Lagos, Nigeria</p>
     </div>
     <div class="header-actions">
-      <div class="badge-private"><i class="fa-solid fa-lock"></i> Private</div>
-      <a href="/admin/logout" class="btn-logout">Sign Out</a>
+      <div class="badge-private"><i class="fa-solid fa-shield-halved"></i> Live AI Sync</div>
+      <a href="#" id="logoutLink" class="btn-logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out</a>
     </div>
   </div>
 
-  <div class="section">
-    <div class="sec-header">
-      <div class="sec-title"><i class="fa-solid fa-chart-bar"></i> Live Metrics</div>
-      <button class="btn btn-sec" onclick="loadAll()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
-    </div>
-    <div class="sec-body metrics-grid" id="metricsGrid">Loading...</div>
+  <!-- ── Tab Navigation ── -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-line"></i> Pipeline Overview</button>
+    <button class="tab-btn" onclick="switchTab('catalog')"><i class="fa-solid fa-store"></i> AI Product Memory</button>
+    <button class="tab-btn" onclick="switchTab('whatsapp')"><i class="fa-brands fa-whatsapp"></i> WhatsApp Portal</button>
   </div>
 
-  <div class="section">
-    <div class="sec-header">
-      <div class="sec-title"><i class="fa-solid fa-users"></i> All Customers</div>
-    </div>
-    <div class="table-wrapper">
-      <table>
-        <thead><tr><th>Session</th><th>Tag</th><th>Name</th><th>Phone</th><th>Topic</th><th>Budget</th><th>Last Seen</th></tr></thead>
-        <tbody id="allCustomersTbody"></tbody>
-      </table>
-      <div style="text-align: center; margin: 15px 0;">
-        <button id="viewMoreBtn" class="btn btn-sec" onclick="viewMoreCustomers()" style="display:none;">View More</button>
+  <!-- ── Tab 1: Pipeline Overview ── -->
+  <div id="tab-dashboard" class="tab-content active">
+    
+    <!-- ── Live Metrics ── -->
+    <div class="glass-panel">
+      <div class="panel-ctrl">
+        <div class="panel-ctrl-title"><i class="fa-solid fa-chart-pie"></i> Real-time Business Analytics</div>
+        <button class="btn btn-sec" onclick="loadAll()"><i class="fa-solid fa-rotate-right"></i> Refresh Stats</button>
+      </div>
+      <div class="metrics-grid" id="metricsGrid">
+        <div class="empty-state">Calculating metrics...</div>
       </div>
     </div>
-  </div>
 
-  <!-- Detail Panel -->
-  <div class="section" id="detailPanel" style="display:none;">
-    <div class="sec-header">
-      <div class="sec-title"><i class="fa-solid fa-user-circle"></i> Customer Detail: <span id="lblSession" style="color:var(--primary);"></span></div>
-      <button class="btn btn-sec" style="padding:6px 12px; font-size: 0.8rem;" onclick="closeDetail()"><i class="fa-solid fa-xmark"></i> Close</button>
-    </div>
-    <div class="sec-body detail-grid">
-      
-      <!-- Left col: Chat -->
-      <div>
-        <h4 style="margin-bottom:12px;font-size:0.9rem;">Conversation History</h4>
-        <div class="chat-log" id="chatLog"></div>
+    <!-- ── Leads Pipeline Table ── -->
+    <div class="glass-panel">
+      <div class="panel-ctrl">
+        <div class="panel-ctrl-title"><i class="fa-solid fa-address-book"></i> Active Leads Pipeline</div>
+        <div class="search-field">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="leadSearchInput" placeholder="Search by name, phone or product..." oninput="filterLeads()"/>
+        </div>
       </div>
-      
-      <!-- Right col: Forms -->
-      <div>
-        <div style="background:#f8fafc; padding:20px; border-radius:8px; border:1px solid var(--border); margin-bottom:20px;">
-          <h4 style="margin-bottom:16px;font-size:0.9rem;"><i class="fa-solid fa-tags"></i> Manage Lead</h4>
-          <div style="display:flex; gap:10px; margin-bottom:16px;">
-            <select id="tagSelect" class="form-control" style="width:auto;flex:1;">
-              <option value="new">New</option><option value="warm">Warm</option><option value="hot">Hot</option>
-              <option value="inactive">Inactive</option><option value="converted">Converted</option><option value="vip">VIP</option>
-            </select>
-            <button class="btn" onclick="saveTag()">Apply Tag</button>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Customer Status</th>
+              <th>Full Name</th>
+              <th>WhatsApp Number</th>
+              <th>Product Interest</th>
+              <th>Budget Status</th>
+              <th>Last Contact</th>
+            </tr>
+          </thead>
+          <tbody id="allCustomersTbody"></tbody>
+        </table>
+        <div style="text-align: center; margin: 15px 0;">
+          <button id="viewMoreBtn" class="btn btn-sec" onclick="viewMoreCustomers()" style="display:none;">Load More Leads</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Detail Panel (Conditional Display) ── -->
+    <div class="glass-panel" id="detailPanel" style="display:none;">
+      <div class="panel-ctrl">
+        <div class="panel-ctrl-title"><i class="fa-solid fa-user-gear"></i> Lead Management Panel: <span id="lblSession" style="color:var(--primary); font-family:monospace;"></span></div>
+        <button class="btn btn-sec" style="padding:6px 12px; font-size: 0.8rem;" onclick="closeDetail()"><i class="fa-solid fa-xmark"></i> Hide Details</button>
+      </div>
+      <div class="sec-body detail-grid">
+        
+        <!-- Left Column: Chat Log -->
+        <div>
+          <h4 style="margin-bottom:12px;font-size:0.9rem;font-weight:600;"><i class="fa-solid fa-comments"></i> Conversation History</h4>
+          <div class="chat-log" id="chatLog"></div>
+        </div>
+        
+        <!-- Right Column: Lead Scoring and Tools -->
+        <div>
+          <div class="lead-score-gauge">
+            <div>
+              <h4 style="font-size:0.9rem; font-weight:700; margin-bottom:2px;">AI Sales Readiness Score</h4>
+              <p style="font-size:0.75rem; color:var(--text-muted);" id="leadScoreLabel">Analyzing buyer patterns...</p>
+            </div>
+            <div class="lead-score-circle" id="leadScoreCircle">--</div>
           </div>
-          <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-          <div class="form-group"><label>Full Name</label><input type="text" id="inpName" class="form-control"/></div>
-          <div class="form-group"><label>WhatsApp Number</label><input type="text" id="inpPhone" class="form-control"/></div>
-          <button class="btn" onclick="saveInfo()" style="width:100%;">Save Info</button>
+
+          <div style="background:rgba(255,255,255,0.015); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:20px;">
+            <h4 style="margin-bottom:16px;font-size:0.9rem;font-weight:700;"><i class="fa-solid fa-id-badge"></i> Update Customer File</h4>
+            <div style="display:flex; gap:10px; margin-bottom:16px;">
+              <select id="tagSelect" class="form-control" style="width:auto;flex:1;">
+                <option value="new">🔴 New Lead</option>
+                <option value="warm">🟡 Warm Lead</option>
+                <option value="hot">🔥 Hot Pipeline</option>
+                <option value="vip">⭐ VIP Client</option>
+                <option value="converted">🟢 Converted Sale</option>
+                <option value="inactive">⚫ Cold / Inactive</option>
+              </select>
+              <button class="btn" onclick="saveTag()"><i class="fa-solid fa-tag"></i> Set Tag</button>
+            </div>
+            <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
+            <div class="form-group"><label>Customer Name</label><input type="text" id="inpName" class="form-control" placeholder="Update full name"/></div>
+            <div class="form-group"><label>WhatsApp Number</label><input type="text" id="inpPhone" class="form-control" placeholder="e.g. +2348033333333"/></div>
+            <div class="form-group"><label>Internal Admin Notes</label><textarea id="inpNotes" class="form-control" placeholder="Add custom context, delivery address or discount terms..."></textarea></div>
+            <button class="btn" onclick="saveInfo()" style="width:100%;"><i class="fa-solid fa-floppy-disk"></i> Save Customer Profile</button>
+          </div>
+
+          <!-- AI Suggested Follow-up tool -->
+          <div style="background:rgba(16,185,129,0.03); border:1px solid rgba(16,185,129,0.15); padding:20px; border-radius:12px;">
+            <h4 style="margin-bottom:8px;font-size:0.9rem;color:#34d399;font-weight:700;"><i class="fa-brands fa-whatsapp"></i> AI-Drafted Retention Message</h4>
+            <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px;">Smart sales follow-up dynamically calculated based on product interest.</p>
+            <textarea id="txtFollowup" class="form-control" style="margin-bottom:12px; background:rgba(0,0,0,0.2); border-color:rgba(16,185,129,0.2); color:#e2e8f0;"></textarea>
+            <a id="btnWaLink" href="#" target="_blank" class="btn" style="display:inline-flex;justify-content:center;width:100%;text-decoration:none;background:#22c55e;box-shadow:0 4px 12px rgba(34,197,94,0.3);"><i class="fa-brands fa-whatsapp"></i> Open WhatsApp Web</a>
+            <div id="waWarning" style="color:var(--danger);font-size:0.8rem;margin-top:8px;display:none;font-weight:600;"><i class="fa-solid fa-circle-exclamation"></i> Save a WhatsApp phone number first to trigger outreach links!</div>
+          </div>
         </div>
 
-        <div style="background:#f0fdf4; padding:20px; border-radius:8px; border:1px solid #bbf7d0;">
-          <h4 style="margin-bottom:10px;font-size:0.9rem;color:#166534;"><i class="fa-brands fa-whatsapp"></i> Follow-up</h4>
-          <p style="font-size:0.8rem;color:#15803d;margin-bottom:12px;">AI drafted message. Edit before sending.</p>
-          <textarea id="txtFollowup" class="form-control" style="margin-bottom:12px;"></textarea>
-          <a id="btnWaLink" href="#" target="_blank" class="btn" style="display:inline-block;text-align:center;width:100%;text-decoration:none;background:#22c55e;"><i class="fa-brands fa-whatsapp"></i> Open WhatsApp</a>
-          <div id="waWarning" style="color:#b91c1c;font-size:0.8rem;margin-top:8px;display:none;">Add a phone number first!</div>
+      </div>
+    </div>
+
+    <!-- ── Silent Leads Panel ── -->
+    <div class="glass-panel">
+      <div class="panel-ctrl">
+        <div class="panel-ctrl-title" style="color:var(--warning);"><i class="fa-solid fa-bell"></i> High Priority Follow-ups (Neglected Hot/Warm Leads)</div>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Status</th>
+              <th>Name</th>
+              <th>WhatsApp Number</th>
+              <th>Time Idle</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="silentTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Tab 2: AI Product Memory (Catalog Editor) ── -->
+  <div id="tab-catalog" class="tab-content">
+    <div class="glass-panel">
+      <div class="panel-ctrl">
+        <div>
+          <h2 class="panel-ctrl-title" style="font-size:1.4rem;"><i class="fa-solid fa-warehouse"></i> Catalog Manager & AI Semantic Memory</h2>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-top:4px;">Products updated here instantly rebuild the FAISS RAG index so the Llama Sales Brain answers live customer queries with updated prices and stock counts.</p>
         </div>
+        <button class="btn" onclick="openProductModal()"><i class="fa-solid fa-plus"></i> Add Product Item</button>
       </div>
 
+      <div class="catalog-grid" id="catalogGrid">
+        <div class="empty-state">Loading product catalog...</div>
+      </div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="sec-header">
-      <div class="sec-title"><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b;"></i> Silent Customers (Needs Follow-up)</div>
-    </div>
-    <div class="table-wrapper">
-      <table>
-        <thead><tr><th>Session</th><th>Tag</th><th>Name</th><th>Phone</th><th>Last Seen</th><th>Action</th></tr></thead>
-        <tbody id="silentTbody"></tbody>
-      </table>
+  <!-- ── Tab 3: WhatsApp Portal ── -->
+  <div id="tab-whatsapp" class="tab-content">
+    <div class="whatsapp-sim-layout">
+      
+      <!-- Webhook settings panel -->
+      <div class="glass-panel">
+        <h2 class="panel-ctrl-title" style="font-size:1.3rem; margin-bottom:6px;"><i class="fa-solid fa-circle-nodes"></i> Meta WhatsApp Cloud API Setup</h2>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:20px;">Mount these details in your Meta Business Suite developer center to establish live automated messaging channels.</p>
+        
+        <div class="form-group">
+          <label>Callback Webhook URL</label>
+          <input type="text" id="settingWebhook" class="form-control" readonly style="background:rgba(0,0,0,0.3); color:var(--primary); font-family:monospace; font-weight:600;"/>
+        </div>
+        <div class="form-group">
+          <label>Webhook Verify Token</label>
+          <input type="text" id="settingVerifyToken" class="form-control" placeholder="Enter validation verification string"/>
+        </div>
+        <div class="form-group">
+          <label>WhatsApp Phone Number ID</label>
+          <input type="text" id="settingPhoneId" class="form-control" placeholder="e.g. 10459392019485"/>
+        </div>
+        <div class="form-group">
+          <label>Meta Permanent Access Token</label>
+          <textarea id="settingAccessToken" class="form-control" placeholder="EAAGx..." style="font-family:monospace; font-size:0.8rem;"></textarea>
+        </div>
+        <div class="form-group" style="display:flex; align-items:center; gap:10px; margin-top:20px; background:rgba(255,255,255,0.01); border:1px solid var(--border); padding:12px; border-radius:8px;">
+          <input type="checkbox" id="settingLiveMode" style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;"/>
+          <label for="settingLiveMode" style="margin:0; cursor:pointer;">Activate Live Automated Agent (Production Mode)</label>
+        </div>
+        <button class="btn" onclick="saveWhatsappSettings()" style="width:100%; margin-top:20px;"><i class="fa-solid fa-circle-check"></i> Save Integration Credentials</button>
+      </div>
+
+      <!-- Live Webhook Chat Simulator -->
+      <div class="glass-panel">
+        <h2 class="panel-ctrl-title" style="font-size:1.3rem; margin-bottom:6px;"><i class="fa-solid fa-terminal"></i> WhatsApp Integration Simulator</h2>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:20px;">Trigger simulated incoming WhatsApp chat packets to trace lead generation, intent analysis, and database storage.</p>
+        
+        <div class="whatsapp-sim-layout" style="grid-template-columns: 1fr;">
+          <div class="sim-phone-frame">
+            <div class="sim-phone-header">
+              <div class="sim-phone-avatar"><i class="fa-brands fa-whatsapp"></i></div>
+              <div>
+                <div class="sim-phone-title">HelloAgain Sales Assistant</div>
+                <div class="sim-phone-status"><i class="fa-solid fa-circle" style="font-size:7px; vertical-align:middle; margin-right:3px;"></i> Online</div>
+              </div>
+            </div>
+            
+            <div class="sim-phone-body" id="simChatBody">
+              <div class="sim-msg sim-msg-ai">Hello! Welcome to the WhatsApp Integration Hub. You can send test queries on the keyboard below to test my sales intelligence. Try asking for phones or agbadas!</div>
+            </div>
+            
+            <div class="sim-phone-input-bar">
+              <div class="form-group" style="margin:0; flex:1; display:flex; gap:8px;">
+                <input type="text" id="simPhoneInput" class="form-control" placeholder="Test Sender Phone (e.g. 2348011112222)" style="max-width:180px; font-size:0.78rem;" value="2348022223333"/>
+                <input type="text" id="simMsgInput" class="form-control" placeholder="Type test WhatsApp message..." style="font-size:0.78rem;" onkeypress="if(event.key==='Enter') sendSimulatedWebhook()"/>
+                <button class="btn" style="padding:10px 14px;" onclick="sendSimulatedWebhook()"><i class="fa-solid fa-paper-plane"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
 </div>
 
+<!-- ── Product Edit/Create Modal ── -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Add Product Catalog Item</div>
+      <button class="modal-close" onclick="closeProductModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    
+    <input type="hidden" id="prodId"/>
+    <div class="form-group">
+      <label>Product Category</label>
+      <select id="prodCategory" class="form-control">
+        <option value="tech">Tech & Accessories</option>
+        <option value="fashion">Fashion & Clothing</option>
+        <option value="food">Food & Groceries</option>
+        <option value="home">Home & Kitchen Appliances</option>
+        <option value="beauty">Beauty & Cosmetics</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Brand / Product Type Name</label>
+      <input type="text" id="prodBrand" class="form-control" placeholder="e.g. iPhone 16 Pro, Traditional Senator"/>
+    </div>
+    <div style="display:grid; grid-template-columns: 1.1fr 0.9fr; gap:12px;">
+      <div class="form-group" style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border); padding:8px 12px; border-radius:8px; margin-top:20px;">
+        <input type="checkbox" id="prodInStock" style="width:16px; height:16px; accent-color:var(--primary);" checked onchange="toggleStockCount()"/>
+        <label for="prodInStock" style="margin:0; cursor:pointer;">Available In Stock</label>
+      </div>
+      <div class="form-group">
+        <label>Quantity in Stock</label>
+        <input type="number" id="prodStockCount" class="form-control" placeholder="e.g. 15"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Display Image URL (Optional)</label>
+      <input type="text" id="prodImage" class="form-control" placeholder="https://unsplash.com/..."/>
+    </div>
+    <div class="form-group">
+      <label>Detailed Pricing & Product Details (Markdown / Content)</label>
+      <textarea id="prodContent" class="form-control" style="min-height:120px;" placeholder="Samsung Galaxy S24 Ultra (NGN 1,800,000). Highly sought-after device with premium camera setup. Nationwide Lagos delivery."></textarea>
+    </div>
+    
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:24px;">
+      <button class="btn btn-sec" onclick="closeProductModal()">Cancel</button>
+      <button class="btn" onclick="saveProduct()"><i class="fa-solid fa-cloud-arrow-up"></i> Save & Sync AI</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Live Toast System ── -->
 <div id="toast" class="toast">Action successful</div>
 
 <script>
+// Determine correct subpath router prefix in WSGI dispatcher setups
+const basePrefix = window.location.pathname.startsWith('/admin') ? '/admin' : '';
+document.getElementById('logoutLink').href = basePrefix + '/logout';
+
 let currentSession = null;
+let allCustomersData = [];
+let customersVisibleCount = 10;
+
+// Tab Controller
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  
+  // Find current trigger
+  const trigger = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+  if(trigger) trigger.classList.add('active');
+  
+  const contentEl = document.getElementById(`tab-${tabId}`);
+  if(contentEl) contentEl.classList.add('active');
+  
+  if (tabId === 'catalog') {
+    loadCatalog();
+  } else if (tabId === 'whatsapp') {
+    loadWhatsappSettings();
+  } else {
+    loadAll();
+  }
+}
 
 async function loadAll() {
   loadMetrics();
@@ -202,40 +903,41 @@ async function loadAll() {
 async function loadMetrics() {
   const a = await apiFetch('/api/analytics');
   if(!a) return;
+  
   const topicsHtml = (a.top_topics && a.top_topics.length)
-    ? ('<div style="font-weight:700;margin-bottom:6px;">Top Topics</div>' + a.top_topics.map(t=>`<div style="font-size:0.9rem;color:var(--text-muted)">${t.topic} <span style="float:right;font-weight:800">${t.count}</span></div>`).join(''))
-    : '<div class="empty-state">No topics</div>';
+    ? ('<div style="font-weight:700;margin-bottom:8px; font-family:\'Outfit\'; font-size:0.85rem;"><i class="fa-solid fa-chart-simple"></i> Trending Buyer Categories</div>' + 
+       a.top_topics.map(t=>`<div style="font-size:0.85rem;color:var(--text-muted); margin-bottom:6px;">${t.topic.toUpperCase()} <span style="float:right;font-weight:800; color:var(--primary);">${t.count} hits</span></div>`).join(''))
+    : '<div class="empty-state">No popular product searches registered.</div>';
 
   const html = `
-    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-users"></i> Total</div><div class="metric-val">${a.total}</div></div>
-    <div class="metric-card mc-hot"><div class="metric-label"><i class="fa-solid fa-fire"></i> Hot</div><div class="metric-val">${a.hot}</div></div>
-    <div class="metric-card mc-warm"><div class="metric-label"><i class="fa-solid fa-bolt"></i> Warm</div><div class="metric-val">${a.warm}</div></div>
-    <div class="metric-card mc-conv"><div class="metric-label"><i class="fa-solid fa-check"></i> Converted</div><div class="metric-val">${a.converted}</div></div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-clock"></i> Silent >24h</div><div class="metric-val">${a.silent}</div></div>
+    <div class="metric-card mc-revenue">
+      <div class="metric-label"><i class="fa-solid fa-sack-dollar"></i> Estimated Sales Pipeline Value</div>
+      <div class="metric-val">${a.potential_revenue || '₦0'}</div>
+      <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">Estimated revenue from active hot & warm leads combined.</p>
+    </div>
+    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-users"></i> Total Leads</div><div class="metric-val">${a.total}</div></div>
+    <div class="metric-card mc-hot"><div class="metric-label"><i class="fa-solid fa-fire"></i> Hot Leads</div><div class="metric-val">${a.hot}</div></div>
+    <div class="metric-card mc-warm"><div class="metric-label"><i class="fa-solid fa-bolt"></i> Warm Leads</div><div class="metric-val">${a.warm}</div></div>
+    <div class="metric-card mc-conv"><div class="metric-label"><i class="fa-solid fa-circle-check"></i> Conversions</div><div class="metric-val">${a.converted}</div></div>
+    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-clock"></i> Idle >24 Hours</div><div class="metric-val">${a.silent}</div></div>
     <div class="metric-card"><div class="metric-label"><i class="fa-brands fa-whatsapp"></i> W/ Phone</div><div class="metric-val">${a.with_phone}</div></div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-chart-line"></i> Avg Turns</div><div class="metric-val">${a.avg_turns}</div></div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-star"></i> VIP</div><div class="metric-val">${a.vip}</div></div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-user-slash"></i> Inactive</div><div class="metric-val">${a.inactive}</div></div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-percent"></i> Converted %</div><div class="metric-val">${a.percent_converted}%</div></div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-calendar-day"></i> Active 24h</div><div class="metric-val">${a.daily_active}</div></div>
+    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-star"></i> VIP Leads</div><div class="metric-val">${a.vip}</div></div>
+    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-arrow-trend-up"></i> Conversion %</div><div class="metric-val">${a.percent_converted}%</div></div>
     <div class="metric-card" style="grid-column:span 2;">${topicsHtml}</div>
   `;
   document.getElementById('metricsGrid').innerHTML = html;
 }
 
 function getTagHtml(tag, label) {
-  return `<span class="tag-badge tag-${tag}">${label}</span>`;
+  return `<span class="tag-badge tag-${tag}"><i class="fa-solid fa-circle" style="font-size:6px; margin-right:4px;"></i>${label}</span>`;
 }
-
-let allCustomersData = [];
-let customersVisibleCount = 10;
 
 async function loadCustomers() {
   const list = await apiFetch('/api/customers');
   if(!list) return;
   allCustomersData = list;
   
-  // LIFO sort
+  // Sort LIFO
   allCustomersData.sort((a, b) => new Date(b.last_seen) - new Date(a.last_seen));
   
   customersVisibleCount = 10;
@@ -246,36 +948,63 @@ function renderCustomers() {
   const tb = document.getElementById('allCustomersTbody');
   tb.innerHTML = '';
   
-  if(!allCustomersData.length) { 
-    tb.innerHTML = '<tr><td colspan="7" class="empty-state">No customers yet.</td></tr>'; 
+  const filteredData = filterData(allCustomersData);
+  
+  if(!filteredData.length) { 
+    tb.innerHTML = '<tr><td colspan="7" class="empty-state">No matching lead files found.</td></tr>'; 
     const btn = document.getElementById('viewMoreBtn');
     if(btn) btn.style.display = 'none';
     return; 
   }
   
-  const visible = allCustomersData.slice(0, customersVisibleCount);
+  const visible = filteredData.slice(0, customersVisibleCount);
   
   visible.forEach(c => {
     const tr = document.createElement('tr');
     tr.onclick = () => selectCustomer(c.session_short);
+    if(currentSession === c.session_short) {
+      tr.style.background = 'rgba(99,102,241,0.08)';
+      tr.style.borderColor = 'var(--border-active)';
+    }
     tr.innerHTML = `
-      <td style="font-family:monospace;color:var(--primary);font-weight:600;">${c.session_short}</td>
+      <td style="font-family:monospace;color:var(--primary);font-weight:700;">${c.session_short}</td>
       <td>${getTagHtml(c.tag, c.tag_label)}</td>
-      <td>${c.name || '—'}</td><td>${c.phone || '—'}</td>
-      <td>${c.topic || '—'}</td><td>${c.budget || '—'}</td>
-      <td style="font-size:0.8rem;color:var(--text-muted);">${c.last_seen}</td>
+      <td style="font-weight:600;">${c.name || '<span style="color:var(--text-muted);font-weight:normal;">Anonymous</span>'}</td>
+      <td style="color:#e2e8f0; font-family:monospace;">${c.phone || '—'}</td>
+      <td style="color:#fb7185; font-weight:600;">${c.topic ? c.topic.toUpperCase() : '—'}</td>
+      <td style="color:#facc15; font-weight:700;">${c.budget || '—'}</td>
+      <td style="font-size:0.8rem;color:var(--text-muted); font-family:monospace;">${c.last_seen}</td>
     `;
     tb.appendChild(tr);
   });
   
   const btn = document.getElementById('viewMoreBtn');
   if(btn) {
-    if(customersVisibleCount >= allCustomersData.length) {
+    if(customersVisibleCount >= filteredData.length) {
       btn.style.display = 'none';
     } else {
       btn.style.display = 'inline-block';
     }
   }
+}
+
+function filterData(data) {
+  const query = document.getElementById('leadSearchInput').value.toLowerCase().trim();
+  if(!query) return data;
+  return data.filter(c => {
+    return (
+      c.session_short.toLowerCase().includes(query) ||
+      (c.name || '').toLowerCase().includes(query) ||
+      (c.phone || '').toLowerCase().includes(query) ||
+      (c.topic || '').toLowerCase().includes(query) ||
+      (c.budget || '').toLowerCase().includes(query)
+    );
+  });
+}
+
+function filterLeads() {
+  customersVisibleCount = 10;
+  renderCustomers();
 }
 
 function viewMoreCustomers() {
@@ -288,15 +1017,16 @@ async function loadSilent() {
   if(!list) return;
   const tb = document.getElementById('silentTbody');
   tb.innerHTML = '';
-  if(!list.length) { tb.innerHTML = '<tr><td colspan="6" class="empty-state">No silent customers right now.</td></tr>'; return; }
+  if(!list.length) { tb.innerHTML = '<tr><td colspan="6" class="empty-state">No idle lead files require follow-ups today. Keep it up!</td></tr>'; return; }
   list.forEach(c => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td onclick="selectCustomer('${c.session_short}')" style="font-family:monospace;color:var(--primary);font-weight:600;cursor:pointer;">${c.session_short}</td>
+      <td onclick="selectCustomer('${c.session_short}')" style="font-family:monospace;color:var(--primary);font-weight:700;cursor:pointer;">${c.session_short}</td>
       <td>${getTagHtml(c.tag, c.tag_label)}</td>
-      <td>${c.name || '—'}</td><td>${c.phone || '—'}</td>
-      <td style="font-size:0.8rem;color:var(--text-muted);">${c.last_seen}</td>
-      <td><button class="btn btn-sec" style="padding:4px 10px;font-size:0.75rem;" onclick="markSent('${c.session_short}', event)">Mark Sent</button></td>
+      <td style="font-weight:600;">${c.name || 'Anonymous'}</td>
+      <td style="font-family:monospace;">${c.phone || '—'}</td>
+      <td style="color:var(--warning); font-weight:600;"><i class="fa-solid fa-hourglass-half"></i> Idle (Needs follow-up)</td>
+      <td><button class="btn btn-sec" style="padding:6px 12px;font-size:0.75rem;" onclick="markSent('${c.session_short}', event)"><i class="fa-solid fa-check"></i> Mark Sent</button></td>
     `;
     tb.appendChild(tr);
   });
@@ -310,10 +1040,13 @@ async function selectCustomer(prefix) {
   document.getElementById('detailPanel').style.display = 'block';
   document.getElementById('lblSession').innerText = prefix;
   
+  // Highlight active row in main table
+  renderCustomers();
+  
   // Populate chat
   const log = document.getElementById('chatLog');
   log.innerHTML = '';
-  if(!data.messages.length) log.innerHTML = '<div class="empty-state">No messages</div>';
+  if(!data.messages.length) log.innerHTML = '<div class="empty-state">No active messages</div>';
   data.messages.forEach(m => {
     const div = document.createElement('div');
     const isUser = m.role === 'user';
@@ -323,7 +1056,7 @@ async function selectCustomer(prefix) {
     let imgHtml = '';
     const imgMatch = text.match(/!\[([^\]]*)\]\(([^)]+)\)/);
     if(imgMatch) {
-      imgHtml = `<img src="${imgMatch[2]}" alt="${imgMatch[1]}" style="margin-top:10px;border-radius:8px;max-width:100%;display:block;box-shadow:0 2px 8px rgba(0,0,0,0.15);"/>`;
+      imgHtml = `<img src="${imgMatch[2]}" alt="${imgMatch[1]}" style="margin-top:10px;border-radius:8px;max-width:100%;display:block;box-shadow:0 4px 12px rgba(0,0,0,0.3);"/>`;
       text = text.replace(imgMatch[0], '').trim();
     }
     
@@ -336,7 +1069,11 @@ async function selectCustomer(prefix) {
   document.getElementById('tagSelect').value = data.customer.tag;
   document.getElementById('inpName').value = data.customer.name;
   document.getElementById('inpPhone').value = data.customer.phone;
+  document.getElementById('inpNotes').value = data.customer.notes || '';
   document.getElementById('txtFollowup').value = data.followup_msg;
+  
+  // AI Lead Scoring System
+  calculateLeadScore(data.customer);
   
   updateWaLink(data.customer.phone, data.followup_msg);
   
@@ -344,9 +1081,44 @@ async function selectCustomer(prefix) {
   document.getElementById('detailPanel').scrollIntoView({behavior: 'smooth', block: 'start'});
 }
 
+function calculateLeadScore(c) {
+  let score = 10; // baseline
+  let label = "Identified Lead";
+  
+  if (c.tag === 'warm') { score = 45; label = "Highly Engaged Lead"; }
+  else if (c.tag === 'hot') { score = 85; label = "Ready to Buy Pipeline"; }
+  else if (c.tag === 'converted') { score = 100; label = "Converted Purchase"; }
+  else if (c.tag === 'vip') { score = 95; label = "VIP Client"; }
+  else if (c.tag === 'inactive') { score = 5; label = "Cold Lead"; }
+  
+  // Add weight if notes, phone, or budget exists
+  if (c.phone) score += 5;
+  if (c.name) score += 5;
+  if (c.budget) score += 5;
+  
+  score = Math.min(100, score);
+  
+  const circle = document.getElementById('leadScoreCircle');
+  circle.innerText = score;
+  document.getElementById('leadScoreLabel').innerText = label;
+  
+  // Dynamic color for score circle
+  if (score >= 80) {
+    circle.style.borderColor = 'var(--success)';
+    circle.style.boxShadow = '0 0 10px var(--success-glow)';
+  } else if (score >= 40) {
+    circle.style.borderColor = 'var(--warning)';
+    circle.style.boxShadow = '0 0 10px rgba(245,158,11,0.2)';
+  } else {
+    circle.style.borderColor = 'var(--danger)';
+    circle.style.boxShadow = '0 0 10px rgba(239,68,68,0.2)';
+  }
+}
+
 function closeDetail() {
   document.getElementById('detailPanel').style.display = 'none';
   currentSession = null;
+  renderCustomers();
 }
 
 function updateWaLink(phone, msg) {
@@ -354,7 +1126,9 @@ function updateWaLink(phone, msg) {
   const warn = document.getElementById('waWarning');
   if(phone) {
     let num = phone.replace(/\D/g,'');
-    if(!num.startsWith('234')) num = '234' + num.replace(/^0/,'');
+    if(!num.startsWith('234') && !num.startsWith('+')) {
+      num = '234' + num.replace(/^0/,'');
+    }
     btn.href = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
     btn.style.pointerEvents = 'auto'; btn.style.opacity = '1';
     warn.style.display = 'none';
@@ -374,7 +1148,7 @@ async function saveTag() {
   const tag = document.getElementById('tagSelect').value;
   const resp = await apiFetch('/api/tag', { method:'POST', body: JSON.stringify({session_prefix: currentSession, tag}) });
   if(!resp) return;
-  showToast("Tag updated");
+  showToast("Tag and status updated successfully.");
   loadAll();
 }
 
@@ -382,9 +1156,10 @@ async function saveInfo() {
   if(!currentSession) return;
   const name = document.getElementById('inpName').value;
   const phone = document.getElementById('inpPhone').value;
-  const resp = await apiFetch('/api/save', { method:'POST', body: JSON.stringify({session_prefix: currentSession, name, phone}) });
+  const notes = document.getElementById('inpNotes').value;
+  const resp = await apiFetch('/api/save', { method:'POST', body: JSON.stringify({session_prefix: currentSession, name, phone, notes}) });
   if(!resp) return;
-  showToast("Info saved");
+  showToast("Lead file updated successfully.");
   updateWaLink(phone, document.getElementById('txtFollowup').value);
   loadAll();
 }
@@ -393,45 +1168,248 @@ async function markSent(prefix, e) {
   e.stopPropagation();
   const resp = await apiFetch('/api/mark-sent', { method:'POST', body: JSON.stringify({session_prefix: prefix}) });
   if(!resp) return;
-  showToast("Marked as sent");
+  showToast("Outreach logged as sent.");
   loadAll();
 }
 
-// Helper: fetch wrapper that handles auth redirects and non-JSON responses
+// ── Tab 2: Catalog Memory Controls ──
+async function loadCatalog() {
+  const items = await apiFetch('/api/kb');
+  if(!items) return;
+  const grid = document.getElementById('catalogGrid');
+  grid.innerHTML = '';
+  
+  if(!items.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column: span 3;">No product lines have been configured yet. Click "Add Product" to populate your AI catalog.</div>';
+    return;
+  }
+  
+  items.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'catalog-card';
+    
+    const hasImg = p.image_url ? true : false;
+    const bgImgStyle = hasImg ? `background-image: url('${p.image_url}')` : `background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)`;
+    
+    const stockBadge = p.in_stock 
+      ? `<span class="catalog-card-badge ccb-instock"><i class="fa-solid fa-circle-check"></i> In Stock (${p.stock_count || '∞'})</span>`
+      : `<span class="catalog-card-badge ccb-oos"><i class="fa-solid fa-circle-xmark"></i> Out of Stock</span>`;
+      
+    card.innerHTML = `
+      <div class="catalog-card-image" style="${bgImgStyle}">
+        ${stockBadge}
+      </div>
+      <div class="catalog-card-cat">${p.category}</div>
+      <div class="catalog-card-brand">${p.brand}</div>
+      <div class="catalog-card-content">${p.content.replace(/\n/g, '<br>')}</div>
+      <div class="catalog-card-footer">
+        <button class="btn btn-sec" style="padding:6px 12px; font-size:0.75rem;" onclick="openProductModal(${p.id}, '${p.category}', '${p.brand.replace(/'/g, "\\'")}', ${p.in_stock}, ${p.stock_count || 'null'}, '${p.image_url || ''}', '${p.content.replace(/\n/g, '\\n').replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button class="btn btn-danger" style="padding:6px 12px; font-size:0.75rem;" onclick="deleteProduct(${p.id})"><i class="fa-solid fa-trash-can"></i> Delete</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function toggleStockCount() {
+  const stockCheck = document.getElementById('prodInStock').checked;
+  const countInp = document.getElementById('prodStockCount');
+  if(!stockCheck) {
+    countInp.value = 0;
+    countInp.disabled = true;
+  } else {
+    countInp.disabled = false;
+  }
+}
+
+function openProductModal(id = null, category = 'tech', brand = '', inStock = true, stockCount = null, imageUrl = '', content = '') {
+  document.getElementById('productModal').style.display = 'flex';
+  
+  if (id) {
+    document.getElementById('modalTitle').innerText = 'Modify Product Catalog Item';
+    document.getElementById('prodId').value = id;
+    document.getElementById('prodCategory').value = category;
+    document.getElementById('prodBrand').value = brand;
+    document.getElementById('prodInStock').checked = inStock;
+    document.getElementById('prodStockCount').value = stockCount || '';
+    document.getElementById('prodImage').value = imageUrl;
+    document.getElementById('prodContent').value = content;
+  } else {
+    document.getElementById('modalTitle').innerText = 'Create Product Catalog Item';
+    document.getElementById('prodId').value = '';
+    document.getElementById('prodCategory').value = 'tech';
+    document.getElementById('prodBrand').value = '';
+    document.getElementById('prodInStock').checked = true;
+    document.getElementById('prodStockCount').value = '';
+    document.getElementById('prodImage').value = '';
+    document.getElementById('prodContent').value = '';
+  }
+  toggleStockCount();
+}
+
+function closeProductModal() {
+  document.getElementById('productModal').style.display = 'none';
+}
+
+async function saveProduct() {
+  const id = document.getElementById('prodId').value;
+  const category = document.getElementById('prodCategory').value;
+  const brand = document.getElementById('prodBrand').value;
+  const in_stock = document.getElementById('prodInStock').checked;
+  const stock_count = document.getElementById('prodStockCount').value;
+  const image_url = document.getElementById('prodImage').value;
+  const content = document.getElementById('prodContent').value;
+  
+  if(!category || !brand || !content) {
+    showToast("Please fill in Category, Brand Name and Product Details.");
+    return;
+  }
+  
+  const payload = { category, brand, in_stock, stock_count, image_url, content };
+  
+  let resp;
+  if(id) {
+    resp = await apiFetch(`/api/kb/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+  } else {
+    resp = await apiFetch('/api/kb', { method: 'POST', body: JSON.stringify(payload) });
+  }
+  
+  if(!resp) return;
+  showToast(id ? "Product updated & AI memory successfully synchronized." : "Product added & AI memory successfully synchronized.");
+  closeProductModal();
+  loadCatalog();
+}
+
+async function deleteProduct(id) {
+  if(!confirm("Are you sure you want to delete this product? This will erase it from the AI's semantic knowledge base instantly.")) return;
+  const resp = await apiFetch(`/api/kb/${id}`, { method: 'DELETE' });
+  if(!resp) return;
+  showToast("Product successfully purged from AI memory catalog.");
+  loadCatalog();
+}
+
+// ── Tab 3: WhatsApp Settings Integration ──
+async function loadWhatsappSettings() {
+  const data = await apiFetch('/api/whatsapp-settings');
+  if(!data) return;
+  
+  document.getElementById('settingWebhook').value = data.webhook_url;
+  document.getElementById('settingVerifyToken').value = data.verify_token;
+  document.getElementById('settingPhoneId').value = data.phone_number_id;
+  document.getElementById('settingAccessToken').value = data.access_token;
+  document.getElementById('settingLiveMode').checked = data.live_mode === "1";
+}
+
+async function saveWhatsappSettings() {
+  const verify_token = document.getElementById('settingVerifyToken').value;
+  const phone_number_id = document.getElementById('settingPhoneId').value;
+  const access_token = document.getElementById('settingAccessToken').value;
+  const live_mode = document.getElementById('settingLiveMode').checked ? "1" : "0";
+  
+  const resp = await apiFetch('/api/whatsapp-settings', {
+    method: 'POST',
+    body: JSON.stringify({ verify_token, phone_number_id, access_token, live_mode })
+  });
+  
+  if(!resp) return;
+  showToast("WhatsApp Cloud integration credentials saved.");
+}
+
+// ── Webhook Chat Simulator ──
+async function sendSimulatedWebhook() {
+  const phoneInput = document.getElementById('simPhoneInput');
+  const msgInput = document.getElementById('simMsgInput');
+  const phone = phoneInput.value.trim();
+  const message = msgInput.value.trim();
+  
+  if(!phone || !message) {
+    showToast("Type a test phone number and a message to send.");
+    return;
+  }
+  
+  const body = document.getElementById('simChatBody');
+  
+  // Append user bubble instantly
+  const userDiv = document.createElement('div');
+  userDiv.className = 'sim-msg sim-msg-user';
+  userDiv.innerText = message;
+  body.appendChild(userDiv);
+  body.scrollTop = body.scrollHeight;
+  
+  msgInput.value = '';
+  msgInput.disabled = true;
+  
+  // Fetch AI Response webhook simulation
+  const data = await apiFetch('/api/whatsapp/simulate', {
+    method: 'POST',
+    body: JSON.stringify({ phone, message })
+  });
+  
+  msgInput.disabled = false;
+  msgInput.focus();
+  
+  if(!data) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'sim-msg sim-msg-ai';
+    errorDiv.style.background = 'rgba(239, 68, 68, 0.2)';
+    errorDiv.innerText = "Error contacting AI webhook simulator. Double check model config.";
+    body.appendChild(errorDiv);
+    return;
+  }
+  
+  // Append AI bubble
+  const aiDiv = document.createElement('div');
+  aiDiv.className = 'sim-msg sim-msg-ai';
+  aiDiv.innerHTML = data.reply.replace(/\n/g, '<br>');
+  body.appendChild(aiDiv);
+  body.scrollTop = body.scrollHeight;
+  
+  showToast(`Simulated message processed for session wa-${phone}`);
+}
+
+// Helper: robust fetch wrapper that handles subpath redirects and formats
 async function apiFetch(path, options) {
   try {
-    const res = await fetch(path, Object.assign({credentials: 'same-origin', headers: {'Content-Type':'application/json'}}, options));
-    const ct = res.headers.get('content-type') || '';
+    const fullPath = path.startsWith('/api') ? basePrefix + path : path;
+    const res = await fetch(fullPath, Object.assign({
+      credentials: 'same-origin',
+      headers: {'Content-Type':'application/json'}
+    }, options));
+    
     if (!res.ok) {
       if (res.status === 401 || res.status === 403) {
-        document.getElementById('metricsGrid').innerHTML = '<div class="empty-state">Not authenticated — <a href="/login">Sign in</a></div>';
+        document.getElementById('metricsGrid').innerHTML = '<div class="empty-state">Not authenticated — <a href="' + basePrefix + '/login" class="btn">Sign in</a></div>';
         return null;
       }
       const txt = await res.text();
-      console.error('API error', path, res.status, txt);
-      showToast('Server error');
+      console.error('API error', fullPath, res.status, txt);
+      showToast('Backend Server Error: Check Python environment');
       return null;
     }
+    
+    const ct = res.headers.get('content-type') || '';
     if (!ct.includes('application/json')) {
-      // Likely a redirect to a login page; prompt user to sign in
-      document.getElementById('metricsGrid').innerHTML = '<div class="empty-state">Not authenticated — <a href="/login">Sign in</a></div>';
+      // Redirect triggers if session expires or logs out
+      window.location.href = basePrefix + '/login';
       return null;
     }
+    
     return await res.json();
   } catch (err) {
     console.error('Fetch failed', path, err);
-    showToast('Network error');
+    showToast('Network Connection Error');
     return null;
   }
 }
 
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.innerText = msg; t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 3000);
+  t.innerText = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 4000);
 }
 
-// Init
+// Startup
 window.onload = loadAll;
 </script>
 </body>

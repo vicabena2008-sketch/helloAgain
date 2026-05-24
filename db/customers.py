@@ -49,6 +49,8 @@ def _conn():
     return con
 
 
+import re
+
 def init_db():
     with _conn() as con:
         con.executescript("""
@@ -77,6 +79,21 @@ def init_db():
             content     TEXT NOT NULL,
             ts          TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS knowledge_base (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            category      TEXT NOT NULL,
+            brand         TEXT NOT NULL,
+            in_stock      INTEGER DEFAULT 1,
+            stock_count   INTEGER,
+            image_url     TEXT,
+            content       TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS whatsapp_settings (
+            key           TEXT PRIMARY KEY,
+            value         TEXT
+        );
         """)
         # Add new columns if upgrading from old DB
         for col, definition in [
@@ -89,6 +106,27 @@ def init_db():
                 con.execute(f"ALTER TABLE customers ADD COLUMN {col} {definition}")
             except Exception:
                 pass
+
+        # Seed knowledge base if empty
+        row = con.execute("SELECT COUNT(*) FROM knowledge_base").fetchone()
+        if row[0] == 0:
+            try:
+                from knowledge_base import business_data
+                for item in business_data:
+                    con.execute(
+                        """INSERT INTO knowledge_base (category, brand, in_stock, stock_count, image_url, content)
+                           VALUES (?, ?, ?, ?, ?, ?)""",
+                        (
+                            item.get("category"),
+                            item.get("brand", "General"),
+                            1 if item.get("in_stock", True) else 0,
+                            item.get("stock_count"),
+                            item.get("image_url"),
+                            item.get("content")
+                        )
+                    )
+            except Exception as e:
+                print(f"[WARNING] Seeding knowledge_base failed: {e}")
 
 
 def upsert_customer(session_id: str, **kwargs):
@@ -151,7 +189,7 @@ def update_customer_info(session_id: str, name: str = None, phone: str = None, n
             con.execute("UPDATE customers SET name=? WHERE session_id=?", (name, session_id))
         if phone:
             con.execute("UPDATE customers SET phone=? WHERE session_id=?", (phone, session_id))
-        if notes:
+        if notes is not None:
             con.execute("UPDATE customers SET notes=? WHERE session_id=?", (notes, session_id))
 
 
@@ -193,6 +231,63 @@ def get_conversation(session_id: str):
         return [dict(r) for r in rows]
 
 
+# ── Knowledge Base Helpers ───────────────────────────────────────────────────
+def get_all_kb_items():
+    with _conn() as con:
+        rows = con.execute("SELECT * FROM knowledge_base ORDER BY id ASC").fetchall()
+        return [dict(r) for r in rows]
+
+
+def add_kb_item(category: str, brand: str, in_stock: bool, stock_count: int = None, image_url: str = None, content: str = ""):
+    with _conn() as con:
+        cursor = con.execute(
+            """INSERT INTO knowledge_base (category, brand, in_stock, stock_count, image_url, content)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (category, brand, 1 if in_stock else 0, stock_count, image_url, content)
+        )
+        return cursor.lastrowid
+
+
+def update_kb_item(item_id: int, category: str, brand: str, in_stock: bool, stock_count: int = None, image_url: str = None, content: str = ""):
+    with _conn() as con:
+        con.execute(
+            """UPDATE knowledge_base
+               SET category=?, brand=?, in_stock=?, stock_count=?, image_url=?, content=?
+               WHERE id=?""",
+            (category, brand, 1 if in_stock else 0, stock_count, image_url, content, item_id)
+        )
+
+
+def delete_kb_item(item_id: int):
+    with _conn() as con:
+        con.execute("DELETE FROM knowledge_base WHERE id=?", (item_id,))
+
+
+# ── WhatsApp Settings Helpers ──────────────────────────────────────────────────
+def get_whatsapp_settings():
+    with _conn() as con:
+        rows = con.execute("SELECT key, value FROM whatsapp_settings").fetchall()
+        return {r["key"]: r["value"] for r in rows}
+
+
+def save_whatsapp_settings(settings: dict):
+    with _conn() as con:
+        for k, v in settings.items():
+            con.execute("INSERT OR REPLACE INTO whatsapp_settings (key, value) VALUES (?, ?)", (k, str(v)))
+
+
+def parse_budget_number(budget_str: str) -> float:
+    if not budget_str:
+        return 0.0
+    cleaned = re.sub(r'[^\d.]', '', budget_str)
+    try:
+        if cleaned:
+            return float(cleaned)
+    except ValueError:
+        pass
+    return 0.0
+
+
 def get_analytics():
     with _conn() as con:
         total      = con.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
@@ -203,7 +298,13 @@ def get_analytics():
         inactive   = con.execute("SELECT COUNT(*) FROM customers WHERE tag='inactive'").fetchone()[0]
         silent     = len(get_silent_customers(24))
         with_phone = con.execute("SELECT COUNT(*) FROM customers WHERE phone IS NOT NULL AND phone != ''").fetchone()[0]
-        # average turns (nullable)
+        
+        # Calculate potential pipeline value
+        potential_revenue = 0.0
+        budget_rows = con.execute("SELECT budget FROM customers WHERE tag IN ('hot', 'warm') AND converted = 0").fetchall()
+        for r in budget_rows:
+            potential_revenue += parse_budget_number(r[0])
+
         avg_turns = con.execute("SELECT AVG(turn_count) FROM customers").fetchone()[0] or 0
         try:
             avg_turns = round(float(avg_turns), 1)
@@ -235,6 +336,8 @@ def get_analytics():
             "percent_converted": percent_converted,
             "daily_active": daily_active,
             "top_topics": top_topics,
+            "potential_revenue_raw": potential_revenue,
+            "potential_revenue": f"₦{potential_revenue:,.0f}",
         }
 
 
