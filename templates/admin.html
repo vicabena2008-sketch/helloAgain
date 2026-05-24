@@ -200,7 +200,8 @@ async function loadAll() {
 }
 
 async function loadMetrics() {
-  const res = await fetch('/api/analytics'); const a = await res.json();
+  const a = await apiFetch('/api/analytics');
+  if(!a) return;
   const topicsHtml = (a.top_topics && a.top_topics.length)
     ? ('<div style="font-weight:700;margin-bottom:6px;">Top Topics</div>' + a.top_topics.map(t=>`<div style="font-size:0.9rem;color:var(--text-muted)">${t.topic} <span style="float:right;font-weight:800">${t.count}</span></div>`).join(''))
     : '<div class="empty-state">No topics</div>';
@@ -230,8 +231,9 @@ let allCustomersData = [];
 let customersVisibleCount = 10;
 
 async function loadCustomers() {
-  const res = await fetch('/api/customers'); 
-  allCustomersData = await res.json();
+  const list = await apiFetch('/api/customers');
+  if(!list) return;
+  allCustomersData = list;
   
   // LIFO sort
   allCustomersData.sort((a, b) => new Date(b.last_seen) - new Date(a.last_seen));
@@ -282,7 +284,8 @@ function viewMoreCustomers() {
 }
 
 async function loadSilent() {
-  const res = await fetch('/api/silent'); const list = await res.json();
+  const list = await apiFetch('/api/silent');
+  if(!list) return;
   const tb = document.getElementById('silentTbody');
   tb.innerHTML = '';
   if(!list.length) { tb.innerHTML = '<tr><td colspan="6" class="empty-state">No silent customers right now.</td></tr>'; return; }
@@ -300,9 +303,8 @@ async function loadSilent() {
 }
 
 async function selectCustomer(prefix) {
-  const res = await fetch(`/api/customer/${prefix}`);
-  if(!res.ok) return showToast("Failed to load customer");
-  const data = await res.json();
+  const data = await apiFetch(`/api/customer/${prefix}`);
+  if(!data) return;
   
   currentSession = prefix;
   document.getElementById('detailPanel').style.display = 'block';
@@ -370,7 +372,8 @@ document.getElementById('txtFollowup').addEventListener('input', (e) => {
 async function saveTag() {
   if(!currentSession) return;
   const tag = document.getElementById('tagSelect').value;
-  await fetch('/api/tag', { method:'POST', body: JSON.stringify({session_prefix: currentSession, tag}) });
+  const resp = await apiFetch('/api/tag', { method:'POST', body: JSON.stringify({session_prefix: currentSession, tag}) });
+  if(!resp) return;
   showToast("Tag updated");
   loadAll();
 }
@@ -379,7 +382,8 @@ async function saveInfo() {
   if(!currentSession) return;
   const name = document.getElementById('inpName').value;
   const phone = document.getElementById('inpPhone').value;
-  await fetch('/api/save', { method:'POST', body: JSON.stringify({session_prefix: currentSession, name, phone}) });
+  const resp = await apiFetch('/api/save', { method:'POST', body: JSON.stringify({session_prefix: currentSession, name, phone}) });
+  if(!resp) return;
   showToast("Info saved");
   updateWaLink(phone, document.getElementById('txtFollowup').value);
   loadAll();
@@ -387,9 +391,38 @@ async function saveInfo() {
 
 async function markSent(prefix, e) {
   e.stopPropagation();
-  await fetch('/api/mark-sent', { method:'POST', body: JSON.stringify({session_prefix: prefix}) });
+  const resp = await apiFetch('/api/mark-sent', { method:'POST', body: JSON.stringify({session_prefix: prefix}) });
+  if(!resp) return;
   showToast("Marked as sent");
   loadAll();
+}
+
+// Helper: fetch wrapper that handles auth redirects and non-JSON responses
+async function apiFetch(path, options) {
+  try {
+    const res = await fetch(path, Object.assign({credentials: 'same-origin', headers: {'Content-Type':'application/json'}}, options));
+    const ct = res.headers.get('content-type') || '';
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        document.getElementById('metricsGrid').innerHTML = '<div class="empty-state">Not authenticated — <a href="/login">Sign in</a></div>';
+        return null;
+      }
+      const txt = await res.text();
+      console.error('API error', path, res.status, txt);
+      showToast('Server error');
+      return null;
+    }
+    if (!ct.includes('application/json')) {
+      // Likely a redirect to a login page; prompt user to sign in
+      document.getElementById('metricsGrid').innerHTML = '<div class="empty-state">Not authenticated — <a href="/login">Sign in</a></div>';
+      return null;
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('Fetch failed', path, err);
+    showToast('Network error');
+    return null;
+  }
 }
 
 function showToast(msg) {
