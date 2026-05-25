@@ -12,6 +12,7 @@ load_dotenv()
 from chat import chat as ai_chat
 from conversation import ConversationState
 from retrieval import retrieve_context, split_by_stock, rebuild_index
+import threading
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", uuid.uuid4().hex)
@@ -72,8 +73,16 @@ def api_clear():
 def reload_index():
     if request.remote_addr not in ("127.0.0.1", "::1"):
         return jsonify({"error": "Forbidden"}), 403
-    rebuild_index()
-    return jsonify({"ok": True})
+    # perform rebuild asynchronously so the endpoint returns quickly
+    def _worker():
+        try:
+            rebuild_index()
+        except Exception:
+            import logging
+            logging.exception("reload-index failed")
+
+    threading.Thread(target=_worker, daemon=True).start()
+    return jsonify({"ok": True, "started": True})
 
 
 if __name__ == "__main__":

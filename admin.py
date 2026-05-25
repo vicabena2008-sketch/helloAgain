@@ -5,6 +5,8 @@ Run: python admin.py
 
 import os
 import requests as http_requests
+import threading
+import logging
 from functools import wraps
 from urllib.parse import quote
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
@@ -35,18 +37,26 @@ TAG_LABEL = {
 
 # ── Shared helper: rebuild index in BOTH processes ─────────────────────────────
 def _rebuild_everywhere():
-    """Rebuild the FAISS index in this process AND ping the chat app to do the same."""
-    import retrieval
-    retrieval.rebuild_index()
-    try:
-        http_requests.post(
-            f"{CHAT_APP_URL}/api/internal/reload-index",
-            timeout=3
-        )
-        print("[admin] Chat app index reload triggered successfully.")
-    except Exception as e:
-        print(f"[admin] WARNING: Could not ping chat app to reload index: {e}")
-        print("[admin] The chat app will use its old index until it restarts.")
+    """Rebuild the FAISS index in this process AND ping the chat app to do the same.
+
+    Runs the rebuild in a background thread so the admin HTTP request returns
+    immediately and does not block or trigger upstream 502/timeout errors.
+    """
+    def _worker():
+        try:
+            import retrieval
+            retrieval.rebuild_index()
+        except Exception:
+            logging.exception("Admin: local rebuild_index() failed")
+
+        try:
+            http_requests.post(f"{CHAT_APP_URL}/api/internal/reload-index", timeout=3)
+            print("[admin] Chat app index reload triggered successfully.")
+        except Exception as e:
+            print(f"[admin] WARNING: Could not ping chat app to reload index: {e}")
+            print("[admin] The chat app will use its old index until it restarts.")
+
+    threading.Thread(target=_worker, daemon=True).start()
 
 
 # ── Auth decorator ─────────────────────────────────────────────────────────────

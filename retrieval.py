@@ -9,7 +9,9 @@ from sentence_transformers import SentenceTransformer
 
 # At the top, add:
 import threading
+import logging
 _index_lock = threading.Lock()
+logger = logging.getLogger(__name__)
 
 RELEVANCE_THRESHOLD = 0.30
 
@@ -52,22 +54,39 @@ def rebuild_index():
             "image_url": item.get("image_url", ""),
         })
 
-    if new_docs:
-        new_embs = embedding_model.encode(new_docs, show_progress_bar=False)
-        faiss.normalize_L2(new_embs)
-        
-        new_index = faiss.IndexFlatIP(new_embs.shape[1])
-        new_index.add(np.array(new_embs, dtype=np.float32))
-        
-        documents = new_docs
-        doc_metadata = new_meta
-        index = new_index
-        print(f"FAISS index rebuilt dynamically - {index.ntotal} vectors.")
-    else:
-        documents = []
-        doc_metadata = []
-        index = faiss.IndexFlatIP(384)
-        print("FAISS index is empty (no products in knowledge base).")
+    try:
+        if new_docs:
+            new_embs = embedding_model.encode(new_docs, show_progress_bar=False, convert_to_numpy=True)
+            if not isinstance(new_embs, np.ndarray):
+                new_embs = np.array(new_embs, dtype=np.float32)
+            faiss.normalize_L2(new_embs)
+
+            new_index = faiss.IndexFlatIP(new_embs.shape[1])
+            new_index.add(np.array(new_embs, dtype=np.float32))
+
+            with _index_lock:
+                documents = new_docs
+                doc_metadata = new_meta
+                index = new_index
+
+            print(f"FAISS index rebuilt dynamically - {index.ntotal} vectors.")
+        else:
+            with _index_lock:
+                documents = []
+                doc_metadata = []
+                index = faiss.IndexFlatIP(384)
+            print("FAISS index is empty (no products in knowledge base).")
+    except Exception:
+        logger.exception("Failed to rebuild FAISS index")
+        # leave previous index intact if possible; fall back to empty lists if not
+        with _index_lock:
+            documents = documents or []
+            doc_metadata = doc_metadata or []
+            if index is None:
+                try:
+                    index = faiss.IndexFlatIP(384)
+                except Exception:
+                    index = None
 
 
 # Initial build on import
@@ -77,36 +96,51 @@ rebuild_index()
 # ── Public API ────────────────────────────────────────────────────────────────
 def retrieve_context(user_query: str, top_k: int = 5) -> list[tuple]:
     """Returns [(score, doc_text, metadata), ...] sorted by score DESC."""
-    if not user_query.strip() or index is None or index.ntotal == 0:
+    if not user_query or not user_query.strip():
         return []
 
-    q_emb = embedding_model.encode([user_query], convert_to_numpy=True)
-    faiss.normalize_L2(q_emb)
-    scores, indices = index.search(q_emb.astype(np.float32), top_k)
+    try:
+        # copy references under lock to avoid races with rebuilds
+        with _index_lock:
+            local_index = index
+            local_documents = list(documents)
+            local_meta = list(doc_metadata)
 
-    results = []
-    q_lower = user_query.lower()
-    q_words = [w for w in q_lower.split() if len(w) > 3]
-    
-    for score, idx in zip(scores[0], indices[0]):
-        if idx != -1 and idx < len(documents) and score >= RELEVANCE_THRESHOLD:
-            doc_meta = doc_metadata[idx]
-            final_score = float(score)
-            
-            # BM25-like exact match boost for query keywords against the document and brand
-            # This helps counteract FAISS over-indexing on currency or numbers.
-            doc_text = documents[idx].lower()
-            brand_text = doc_meta.get("brand", "").lower()
-            for w in q_words:
-                if w in brand_text:
-                    final_score += 0.10
-                elif w in doc_text:
-                    final_score += 0.05
-                    
-            results.append((final_score, documents[idx], doc_meta))
+        if local_index is None or (hasattr(local_index, "ntotal") and local_index.ntotal == 0):
+            return []
 
-    results.sort(key=lambda x: x[0], reverse=True)
-    return results
+        q_emb = embedding_model.encode([user_query], convert_to_numpy=True)
+        if not isinstance(q_emb, np.ndarray):
+            q_emb = np.array(q_emb, dtype=np.float32)
+        faiss.normalize_L2(q_emb)
+
+        scores, indices = local_index.search(q_emb.astype(np.float32), top_k)
+
+        results = []
+        q_lower = user_query.lower()
+        q_words = [w for w in q_lower.split() if len(w) > 3]
+
+        for score, idx in zip(scores[0], indices[0]):
+            if idx != -1 and idx < len(local_documents) and score >= RELEVANCE_THRESHOLD:
+                doc_meta = local_meta[idx]
+                final_score = float(score)
+
+                # BM25-like exact match boost for query keywords against the document and brand
+                doc_text = local_documents[idx].lower()
+                brand_text = doc_meta.get("brand", "").lower()
+                for w in q_words:
+                    if w in brand_text:
+                        final_score += 0.10
+                    elif w in doc_text:
+                        final_score += 0.05
+
+                results.append((final_score, local_documents[idx], doc_meta))
+
+        results.sort(key=lambda x: x[0], reverse=True)
+        return results
+    except Exception:
+        logger.exception("retrieve_context failed")
+        return []
 
 
 def is_brand_relevant(brand: str, category: str, query: str) -> bool:
