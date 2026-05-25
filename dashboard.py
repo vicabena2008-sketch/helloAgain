@@ -8,12 +8,11 @@ import gradio as gr
 from db.customers import get_all_customers, get_conversation, tag_customer
 
 TAG_COLORS = {
-    "new":       "🔵",
-    "warm":      "🟡",
-    "hot":       "🔴",
-    "inactive":  "⚫",
-    "converted": "🟢",
-    "vip":       "⭐",
+    "active":      "🔴",
+    "follow_up":   "🟡",
+    "recoverable": "🔵",
+    "normal":      "⚫",
+    "converted":   "🟢",
 }
 
 
@@ -21,10 +20,10 @@ def load_customer_table():
     customers = get_all_customers()
     rows = []
     for c in customers:
-        icon = TAG_COLORS.get(c.get("tag", "new"), "🔵")
+        icon = TAG_COLORS.get(c.get("tag", "normal"), "⚫")
         rows.append([
             c["session_id"][:8] + "...",
-            f"{icon} {c.get('tag', 'new')}",
+            f"{icon} {c.get('tag', 'normal')}",
             c.get("topic") or "—",
             c.get("budget") or "—",
             c.get("turn_count", 0),
@@ -92,7 +91,7 @@ def build_dashboard_tab():
         with gr.Row():
             tag_session_input = gr.Textbox(label="Session ID prefix", scale=2)
             tag_dropdown      = gr.Dropdown(
-                choices=["new", "warm", "hot", "inactive", "converted", "vip"],
+                choices=["active", "follow_up", "recoverable", "normal", "converted"],
                 label="New Tag",
                 scale=2,
             )

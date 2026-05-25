@@ -11,7 +11,7 @@ load_dotenv()
 
 from chat import chat as ai_chat
 from conversation import ConversationState
-from retrieval import retrieve_context, split_by_stock
+from retrieval import retrieve_context, split_by_stock, rebuild_index
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", uuid.uuid4().hex)
@@ -39,8 +39,13 @@ def api_chat():
     if sid not in _states:
         _states[sid] = ConversationState()
 
-    state      = _states[sid]
-    reply_text = ai_chat(message, state)
+    state = _states[sid]
+    try:
+        reply_text = ai_chat(message, state)
+    except Exception:
+        import logging
+        logging.exception("Unhandled error in /api/chat")
+        reply_text = "Sorry — I ran into a quick issue. Please send your message again!"
 
     # Pull image if mentioned in reply
     image_url = None
@@ -49,12 +54,10 @@ def api_chat():
         image_url  = img_match.group(2)
         reply_text = reply_text[:img_match.start()] + reply_text[img_match.end():]
 
-    # Split into bubbles
-    bubbles = [b.strip() for b in reply_text.split("---") if b.strip()]
-    if not bubbles:
-        bubbles = ["Sorry, I didn't quite catch that."]
+    # Single reply — no bubble splitting
+    reply_text = reply_text.strip() or "Sorry, I didn't quite catch that. Could you try again?"
 
-    return jsonify({"replies": bubbles, "image_url": image_url})
+    return jsonify({"replies": [reply_text], "image_url": image_url})
 
 
 @app.route("/api/clear", methods=["POST"])
@@ -62,6 +65,14 @@ def api_clear():
     sid = session.get("sid")
     if sid and sid in _states:
         _states[sid].reset()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/internal/reload-index", methods=["POST"])
+def reload_index():
+    if request.remote_addr not in ("127.0.0.1", "::1"):
+        return jsonify({"error": "Forbidden"}), 403
+    rebuild_index()
     return jsonify({"ok": True})
 
 

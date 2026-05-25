@@ -4,6 +4,7 @@ Run: python admin.py
 """
 
 import os
+import requests as http_requests
 from functools import wraps
 from urllib.parse import quote
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
@@ -23,10 +24,29 @@ app.secret_key = os.getenv("ADMIN_SECRET_KEY", "helloagain_admin_secret")
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "helloagain2024")
 
+# ── Chat app URL (where the customer-facing app.py is running) ─────────────────
+CHAT_APP_URL = os.getenv("CHAT_APP_URL", "http://127.0.0.1:5000")
+
 TAG_LABEL = {
-    "new": "New", "warm": "Warm", "hot": "Hot",
-    "inactive": "Inactive", "converted": "Converted", "vip": "VIP",
+    "active": "Active", "follow_up": "Follow-Up",
+    "recoverable": "Recoverable", "normal": "Normal",
 }
+
+
+# ── Shared helper: rebuild index in BOTH processes ─────────────────────────────
+def _rebuild_everywhere():
+    """Rebuild the FAISS index in this process AND ping the chat app to do the same."""
+    import retrieval
+    retrieval.rebuild_index()
+    try:
+        http_requests.post(
+            f"{CHAT_APP_URL}/api/internal/reload-index",
+            timeout=3
+        )
+        print("[admin] Chat app index reload triggered successfully.")
+    except Exception as e:
+        print(f"[admin] WARNING: Could not ping chat app to reload index: {e}")
+        print("[admin] The chat app will use its old index until it restarts.")
 
 
 # ── Auth decorator ─────────────────────────────────────────────────────────────
@@ -60,16 +80,18 @@ def followup_text(c: dict) -> str:
 
 def fmt_customer(c: dict) -> dict:
     return {
-        "session_id":    c["session_id"],
-        "session_short": c["session_id"][:8],
-        "tag":           c.get("tag", "new"),
-        "tag_label":     TAG_LABEL.get(c.get("tag", "new"), c.get("tag", "new")),
-        "name":          c.get("name") or "",
-        "phone":         c.get("phone") or "",
-        "topic":         c.get("topic") or "",
-        "budget":        c.get("budget") or "",
-        "turn_count":    c.get("turn_count", 0),
-        "last_seen":     (c.get("last_seen") or "")[:16].replace("T", " "),
+        "session_id":       c["session_id"],
+        "session_short":    c["session_id"][:8],
+        "tag":              c.get("tag", "normal"),
+        "tag_label":        TAG_LABEL.get(c.get("tag", "normal"), c.get("tag", "normal")),
+        "name":             c.get("name") or "",
+        "phone":            c.get("phone") or "",
+        "topic":            c.get("topic") or "",
+        "budget":           c.get("budget") or "",
+        "turn_count":       c.get("turn_count", 0),
+        "engagement_score": c.get("engagement_score", 0),
+        "last_seen":        (c.get("last_seen") or "")[:16].replace("T", " "),
+        "followup_sent":    c.get("followup_sent", 0),
     }
 
 
@@ -189,6 +211,32 @@ def api_mark_sent():
     return jsonify({"ok": True, "message": "Follow-up marked as sent."})
 
 
+@app.route("/api/automation/run", methods=["POST", "GET"])
+def api_automation_run():
+    # Simple endpoint for a cron service to ping
+    # Processes silent active/follow_up customers (inactive for >24h)
+    token = request.args.get("token") or request.headers.get("Authorization", "").replace("Bearer ", "")
+    expected_token = os.getenv("CRON_TOKEN", "helloagain_cron_secret")
+    if token != expected_token:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    silent_customers = get_silent_customers(24)
+    if not silent_customers:
+        return jsonify({"ok": True, "message": "No silent customers to process.", "processed": 0})
+        
+    from analytics import analyze_and_update_tag
+    import time
+    
+    results = []
+    for c in silent_customers:
+        res = analyze_and_update_tag(c["session_id"])
+        results.append({"session_id": c["session_id"][:8], "new_tag": res.get("tag")})
+        # Sleep to respect Groq rate limits
+        time.sleep(2)
+        
+    return jsonify({"ok": True, "processed": len(results), "results": results})
+
+
 # ── Knowledge Base CRUD Endpoints ──────────────────────────────────────────────
 @app.route("/api/kb", methods=["GET", "POST"])
 @login_required
@@ -209,13 +257,10 @@ def api_kb():
             return jsonify({"error": "Category, brand, and details are required."}), 400
 
         item_id = add_kb_item(cat, brand, in_stock, stock_count, img_url, content)
-        
-        # Rebuild AI semantic vector store instantly!
-        import retrieval
-        retrieval.rebuild_index()
+        _rebuild_everywhere()
 
         return jsonify({"ok": True, "id": item_id, "message": "Product added. AI context index rebuilt."})
-    
+
     return jsonify(get_all_kb_items())
 
 
@@ -224,13 +269,9 @@ def api_kb():
 def api_kb_item(item_id):
     if request.method == "DELETE":
         delete_kb_item(item_id)
-        
-        # Rebuild AI semantic vector store instantly!
-        import retrieval
-        retrieval.rebuild_index()
-        
+        _rebuild_everywhere()
         return jsonify({"ok": True, "message": "Product deleted. AI context index rebuilt."})
-    
+
     data = request.get_json(force=True) or {}
     cat = (data.get("category") or "").strip().lower()
     brand = (data.get("brand") or "").strip()
@@ -246,10 +287,7 @@ def api_kb_item(item_id):
         return jsonify({"error": "Category, brand, and details are required."}), 400
 
     update_kb_item(item_id, cat, brand, in_stock, stock_count, img_url, content)
-    
-    # Rebuild AI semantic vector store instantly!
-    import retrieval
-    retrieval.rebuild_index()
+    _rebuild_everywhere()
 
     return jsonify({"ok": True, "message": "Product updated. AI context index rebuilt."})
 
@@ -261,19 +299,19 @@ def api_whatsapp_simulate():
     data = request.get_json(force=True) or {}
     phone = (data.get("phone") or "").strip()
     msg_text = (data.get("message") or "").strip()
-    
+
     if not phone or not msg_text:
         return jsonify({"error": "Phone and message are required."}), 400
-        
+
     cleaned_phone = phone.replace("+", "").replace(" ", "").replace("-", "")
     session_id = f"wa-{cleaned_phone}"
-    
+
     from chat import chat as ai_chat
     from conversation import ConversationState
-    
+
     state = ConversationState()
     state.session_id = session_id
-    
+
     from db.customers import get_customer, get_conversation, update_customer_info
     existing = get_customer(session_id)
     if existing:
@@ -283,14 +321,19 @@ def api_whatsapp_simulate():
         state.budget_mentioned = existing.get("budget") or ""
         state.turn_count = existing.get("turn_count", 0)
         history = get_conversation(session_id)
+        user_msg = None
         for m in history:
-            state.turns.append((m["role"], m["content"]))
-            
+            if m["role"] == "user":
+                user_msg = m["content"]
+            elif m["role"] == "assistant" and user_msg is not None:
+                state.history.append((user_msg, m["content"]))
+                user_msg = None
+
     reply_text = ai_chat(msg_text, state)
-    
+
     # Ensure phone number is saved explicitly
     update_customer_info(session_id, phone=phone)
-    
+
     return jsonify({
         "ok": True,
         "session_id": session_id,
@@ -305,7 +348,7 @@ def api_whatsapp_settings():
         data = request.get_json(force=True) or {}
         save_whatsapp_settings(data)
         return jsonify({"ok": True, "message": "WhatsApp credentials saved."})
-    
+
     settings = get_whatsapp_settings()
     settings.setdefault("webhook_url", request.url_root.rstrip("/") + "api/whatsapp/webhook")
     settings.setdefault("verify_token", "helloagain_token_2026")

@@ -291,23 +291,24 @@ th {
 }
 td { padding: 14px 18px; border-bottom: 1px solid var(--border); }
 tr { transition: background 0.15s; }
-tbody tr:hover { background: rgba(255,255,255,0.02); cursor: pointer; }
+tbody tr { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+tbody tr:hover { background: rgba(255, 255, 255, 0.05); cursor: pointer; backdrop-filter: blur(4px); box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.02); }
 .tag-badge {
   padding: 4px 10px;
   border-radius: 99px;
-  font-weight: 700;
-  font-size: 0.72rem;
+  font-weight: 800;
+  font-size: 0.7rem;
   display: inline-flex;
   align-items: center;
   gap: 5px;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
-.tag-new { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; }
-.tag-warm { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; }
-.tag-hot { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; }
-.tag-inactive { background: rgba(148, 163, 184, 0.15); border: 1px solid rgba(148, 163, 184, 0.3); color: #cbd5e1; }
-.tag-converted { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; }
-.tag-vip { background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); color: #a78bfa; }
+.tag-active { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2)); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; box-shadow: 0 0 12px rgba(16, 185, 129, 0.2); }
+.tag-follow_up { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2)); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24; box-shadow: 0 0 12px rgba(245, 158, 11, 0.2); }
+.tag-recoverable { background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(2, 132, 199, 0.2)); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; box-shadow: 0 0 12px rgba(56, 189, 248, 0.2); }
+.tag-normal { background: linear-gradient(135deg, rgba(148, 163, 184, 0.15), rgba(100, 116, 139, 0.15)); border: 1px solid rgba(148, 163, 184, 0.3); color: #cbd5e1; }
 
 /* ── Panel Controls Header ── */
 .panel-ctrl {
@@ -368,6 +369,10 @@ tbody tr:hover { background: rgba(255,255,255,0.02); cursor: pointer; }
   background: var(--bg-input-focus);
   box-shadow: 0 0 10px rgba(99,102,241,0.15);
 }
+select.form-control option {
+  background: var(--bg-main);
+  color: #fff;
+}
 textarea.form-control { resize: vertical; min-height: 80px; }
 
 /* ── Customer Detail Grid ── */
@@ -398,12 +403,30 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   justify-content: space-between;
   margin-bottom: 16px;
 }
-.lead-score-circle {
-  width: 52px; height: 52px; border-radius: 50%;
+.lead-score-ring {
+  width: 58px; height: 58px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.1rem;
-  border: 3.5px solid var(--primary);
-  box-shadow: 0 0 10px var(--primary-glow);
+  font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.2rem;
+  position: relative;
+  background: conic-gradient(var(--score-color, var(--primary)) calc(var(--score, 0) * 1%), rgba(255, 255, 255, 0.05) 0);
+}
+.lead-score-ring::before {
+  content: "";
+  position: absolute; inset: 4px; border-radius: 50%;
+  background: var(--bg-card);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+}
+.lead-score-ring span { position: relative; z-index: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+
+.mini-progress-bg {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px; height: 6px; width: 100%;
+  overflow: hidden; margin-top: 4px;
+}
+.mini-progress-fill {
+  height: 100%; border-radius: 99px;
+  background: var(--primary);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Knowledge Base Catalog Tab ── */
@@ -578,6 +601,98 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   .panel-ctrl { flex-direction: column; gap: 12px; align-items: flex-start; }
   .metrics-grid { grid-template-columns: 1fr 1fr; }
   .mc-revenue { grid-column: span 2; }
+/* Strategy buttons container */
+.strategy-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.strategy-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+}
+.strategy-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.strategy-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+}
+.strategy-btn.recommended::after {
+  content: "Recommended";
+  position: absolute;
+  top: -8px;
+  right: -5px;
+  background: var(--success);
+  color: #fff;
+  font-size: 0.55rem;
+  padding: 1px 4px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-weight: 800;
+  box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Template customizer layout */
+.template-customizer {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-top: 12px;
+  display: none;
+}
+.template-customizer.open {
+  display: block;
+}
+.template-customizer-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.template-input-group {
+  margin-bottom: 8px;
+}
+.template-input-group label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 3px;
+  text-transform: none;
+}
+.template-input-group textarea {
+  min-height: 55px;
+  font-size: 0.78rem;
+  padding: 6px 10px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  color: #fff;
 }
 </style>
 </head>
@@ -636,6 +751,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
               <th>WhatsApp Number</th>
               <th>Product Interest</th>
               <th>Budget Status</th>
+              <th>Score</th>
               <th>Last Contact</th>
             </tr>
           </thead>
@@ -668,35 +784,80 @@ textarea.form-control { resize: vertical; min-height: 80px; }
               <h4 style="font-size:0.9rem; font-weight:700; margin-bottom:2px;">AI Sales Readiness Score</h4>
               <p style="font-size:0.75rem; color:var(--text-muted);" id="leadScoreLabel">Analyzing buyer patterns...</p>
             </div>
-            <div class="lead-score-circle" id="leadScoreCircle">--</div>
+            <div class="lead-score-ring" id="leadScoreCircle" style="--score: 0; --score-color: var(--primary);"><span>--</span></div>
           </div>
 
           <div style="background:rgba(255,255,255,0.015); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:20px;">
             <h4 style="margin-bottom:16px;font-size:0.9rem;font-weight:700;"><i class="fa-solid fa-id-badge"></i> Update Customer File</h4>
             <div style="display:flex; gap:10px; margin-bottom:16px;">
               <select id="tagSelect" class="form-control" style="width:auto;flex:1;">
-                <option value="new">🔴 New Lead</option>
-                <option value="warm">🟡 Warm Lead</option>
-                <option value="hot">🔥 Hot Pipeline</option>
-                <option value="vip">⭐ VIP Client</option>
-                <option value="converted">🟢 Converted Sale</option>
-                <option value="inactive">⚫ Cold / Inactive</option>
+                <option value="active">🟢 Active</option>
+                <option value="follow_up">🟡 Follow-Up</option>
+                <option value="recoverable">🟠 Recoverable</option>
+                <option value="normal">⚫ Normal</option>
               </select>
-              <button class="btn" onclick="saveTag()"><i class="fa-solid fa-tag"></i> Set Tag</button>
+              <button id="btnSaveTag" class="btn" onclick="saveTag()"><i class="fa-solid fa-tag"></i> Set Tag</button>
             </div>
             <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
             <div class="form-group"><label>Customer Name</label><input type="text" id="inpName" class="form-control" placeholder="Update full name"/></div>
             <div class="form-group"><label>WhatsApp Number</label><input type="text" id="inpPhone" class="form-control" placeholder="e.g. +2348033333333"/></div>
             <div class="form-group"><label>Internal Admin Notes</label><textarea id="inpNotes" class="form-control" placeholder="Add custom context, delivery address or discount terms..."></textarea></div>
-            <button class="btn" onclick="saveInfo()" style="width:100%;"><i class="fa-solid fa-floppy-disk"></i> Save Customer Profile</button>
+            <button id="btnSaveInfo" class="btn" onclick="saveInfo()" style="width:100%;"><i class="fa-solid fa-floppy-disk"></i> Save Customer Profile</button>
           </div>
 
           <!-- AI Suggested Follow-up tool -->
           <div style="background:rgba(16,185,129,0.03); border:1px solid rgba(16,185,129,0.15); padding:20px; border-radius:12px;">
             <h4 style="margin-bottom:8px;font-size:0.9rem;color:#34d399;font-weight:700;"><i class="fa-brands fa-whatsapp"></i> AI-Drafted Retention Message</h4>
             <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px;">Smart sales follow-up dynamically calculated based on product interest.</p>
+            
+            <!-- Follow-up Strategies Buttons Container -->
+            <div class="strategy-container" id="strategyContainer">
+              <button class="strategy-btn" id="strat-pulse" onclick="selectStrategy('pulse')">💬 Pulse Check</button>
+              <button class="strategy-btn" id="strat-discount" onclick="selectStrategy('discount')">🏷️ Discount</button>
+              <button class="strategy-btn" id="strat-negotiate" onclick="selectStrategy('negotiate')">🤝 Negotiate</button>
+              <button class="strategy-btn" id="strat-testimonial" onclick="selectStrategy('testimonial')">🌟 Testimonial</button>
+              <button class="strategy-btn" id="strat-reengage" onclick="selectStrategy('reengage')">🔄 Re-engage</button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size:0.75rem;color:var(--text-muted);">Edit draft message below:</span>
+              <a href="javascript:void(0)" onclick="toggleTemplateCustomizer()" style="font-size:0.75rem; color:var(--primary); text-decoration:none; font-weight:600;"><i class="fa-solid fa-sliders"></i> Customize Templates</a>
+            </div>
+
+            <!-- Template Customizer Collapsible -->
+            <div class="template-customizer" id="templateCustomizer">
+              <div class="template-customizer-title">
+                <span>Customize Strategy Templates</span>
+                <span style="font-size:0.65rem; color:var(--text-muted);">Variables: {name}, {topic}, {budget}</span>
+              </div>
+              <div class="template-input-group">
+                <label>Pulse Check Template</label>
+                <textarea id="temp-pulse" class="form-control" oninput="saveCustomTemplates()"></textarea>
+              </div>
+              <div class="template-input-group">
+                <label>Offer a Discount Template</label>
+                <textarea id="temp-discount" class="form-control" oninput="saveCustomTemplates()"></textarea>
+              </div>
+              <div class="template-input-group">
+                <label>Negotiate Price Template</label>
+                <textarea id="temp-negotiate" class="form-control" oninput="saveCustomTemplates()"></textarea>
+              </div>
+              <div class="template-input-group">
+                <label>Share Testimonial Template</label>
+                <textarea id="temp-testimonial" class="form-control" oninput="saveCustomTemplates()"></textarea>
+              </div>
+              <div class="template-input-group">
+                <label>Re-engage Template</label>
+                <textarea id="temp-reengage" class="form-control" oninput="saveCustomTemplates()"></textarea>
+              </div>
+            </div>
+
             <textarea id="txtFollowup" class="form-control" style="margin-bottom:12px; background:rgba(0,0,0,0.2); border-color:rgba(16,185,129,0.2); color:#e2e8f0;"></textarea>
-            <a id="btnWaLink" href="#" target="_blank" class="btn" style="display:inline-flex;justify-content:center;width:100%;text-decoration:none;background:#22c55e;box-shadow:0 4px 12px rgba(34,197,94,0.3);"><i class="fa-brands fa-whatsapp"></i> Open WhatsApp Web</a>
+            
+            <div style="display: flex; gap: 8px;">
+              <a id="btnWaLink" href="#" target="_blank" class="btn" style="display:inline-flex;justify-content:center;flex:1;text-decoration:none;background:#22c55e;box-shadow:0 4px 12px rgba(34,197,94,0.3);"><i class="fa-brands fa-whatsapp"></i> Open WhatsApp Web</a>
+              <button id="btnLogSent" class="btn btn-sec" style="padding:10px 14px;" onclick="logSelectedCustomerOutreach()"><i class="fa-solid fa-clipboard-check"></i> Log Sent</button>
+            </div>
             <div id="waWarning" style="color:var(--danger);font-size:0.8rem;margin-top:8px;display:none;font-weight:600;"><i class="fa-solid fa-circle-exclamation"></i> Save a WhatsApp phone number first to trigger outreach links!</div>
           </div>
         </div>
@@ -856,7 +1017,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     
     <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:24px;">
       <button class="btn btn-sec" onclick="closeProductModal()">Cancel</button>
-      <button class="btn" onclick="saveProduct()"><i class="fa-solid fa-cloud-arrow-up"></i> Save & Sync AI</button>
+      <button id="btnSaveProduct" class="btn" onclick="saveProduct()"><i class="fa-solid fa-cloud-arrow-up"></i> Save & Sync AI</button>
     </div>
   </div>
 </div>
@@ -911,18 +1072,25 @@ async function loadMetrics() {
 
   const html = `
     <div class="metric-card mc-revenue">
-      <div class="metric-label"><i class="fa-solid fa-sack-dollar"></i> Estimated Sales Pipeline Value</div>
+      <div class="metric-label"><i class="fa-solid fa-sack-dollar"></i> Sales Pipeline Value</div>
       <div class="metric-val">${a.potential_revenue || '₦0'}</div>
-      <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">Estimated revenue from active hot & warm leads combined.</p>
+      <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">Revenue from active & follow-up leads.</p>
+    </div>
+    <div class="metric-card" style="background:rgba(16,185,129,0.05); border-color:rgba(16,185,129,0.2);">
+      <div class="metric-label"><i class="fa-solid fa-hand-holding-dollar"></i> Recovered Revenue</div>
+      <div class="metric-val" style="color:#34d399;">${a.recovered_revenue || '₦0'}</div>
+      <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">Revenue won back from recoverable leads.</p>
     </div>
     <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-users"></i> Total Leads</div><div class="metric-val">${a.total}</div></div>
-    <div class="metric-card mc-hot"><div class="metric-label"><i class="fa-solid fa-fire"></i> Hot Leads</div><div class="metric-val">${a.hot}</div></div>
-    <div class="metric-card mc-warm"><div class="metric-label"><i class="fa-solid fa-bolt"></i> Warm Leads</div><div class="metric-val">${a.warm}</div></div>
+    <div class="metric-card mc-hot"><div class="metric-label"><i class="fa-solid fa-bolt"></i> Active</div><div class="metric-val">${a.active || 0}</div></div>
+    <div class="metric-card mc-warm"><div class="metric-label"><i class="fa-solid fa-clock-rotate-left"></i> Follow-Up</div><div class="metric-val">${a.follow_up || 0}</div></div>
+    <div class="metric-card" style="border-color:rgba(239,68,68,0.2);"><div class="metric-label"><i class="fa-solid fa-rotate-left"></i> Recoverable</div><div class="metric-val" style="color:#f87171;">${a.recoverable || 0}</div></div>
+    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-user"></i> Normal</div><div class="metric-val">${a.normal || 0}</div></div>
     <div class="metric-card mc-conv"><div class="metric-label"><i class="fa-solid fa-circle-check"></i> Conversions</div><div class="metric-val">${a.converted}</div></div>
     <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-clock"></i> Idle >24 Hours</div><div class="metric-val">${a.silent}</div></div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-brands fa-whatsapp"></i> W/ Phone</div><div class="metric-val">${a.with_phone}</div></div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-star"></i> VIP Leads</div><div class="metric-val">${a.vip}</div></div>
+    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-gauge-high"></i> Avg Engagement</div><div class="metric-val">${a.avg_engagement || 0}<span style="font-size:0.7rem;color:var(--text-muted);">/100</span></div></div>
     <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-arrow-trend-up"></i> Conversion %</div><div class="metric-val">${a.percent_converted}%</div></div>
+    <div class="metric-card"><div class="metric-label"><i class="fa-brands fa-whatsapp"></i> W/ Phone</div><div class="metric-val">${a.with_phone}</div></div>
     <div class="metric-card" style="grid-column:span 2;">${topicsHtml}</div>
   `;
   document.getElementById('metricsGrid').innerHTML = html;
@@ -973,6 +1141,10 @@ function renderCustomers() {
       <td style="color:#e2e8f0; font-family:monospace;">${c.phone || '—'}</td>
       <td style="color:#fb7185; font-weight:600;">${c.topic ? c.topic.toUpperCase() : '—'}</td>
       <td style="color:#facc15; font-weight:700;">${c.budget || '—'}</td>
+      <td style="width:100px;">
+        <div style="font-weight:700; font-size:0.8rem;">${c.engagement_score || 0}</div>
+        <div class="mini-progress-bg"><div class="mini-progress-fill" style="width:${c.engagement_score || 0}%; background: ${c.engagement_score >= 60 ? 'var(--success)' : (c.engagement_score >= 30 ? 'var(--warning)' : 'var(--danger)')};"></div></div>
+      </td>
       <td style="font-size:0.8rem;color:var(--text-muted); font-family:monospace;">${c.last_seen}</td>
     `;
     tb.appendChild(tr);
@@ -1070,49 +1242,75 @@ async function selectCustomer(prefix) {
   document.getElementById('inpName').value = data.customer.name;
   document.getElementById('inpPhone').value = data.customer.phone;
   document.getElementById('inpNotes').value = data.customer.notes || '';
-  document.getElementById('txtFollowup').value = data.followup_msg;
+  
+  // Stored customer details for strategies
+  currentCustomerDetails = data.customer;
   
   // AI Lead Scoring System
   calculateLeadScore(data.customer);
   
-  updateWaLink(data.customer.phone, data.followup_msg);
+  // Run strategy selection & recommendation
+  updateStrategyRecommendation(data.customer);
   
   // Scroll to detail
   document.getElementById('detailPanel').scrollIntoView({behavior: 'smooth', block: 'start'});
 }
 
 function calculateLeadScore(c) {
-  let score = 10; // baseline
-  let label = "Identified Lead";
+  // Use the live AI-computed engagement score from the backend
+  let score = c.engagement_score || 0;
+  let label = "Normal Lead";
   
-  if (c.tag === 'warm') { score = 45; label = "Highly Engaged Lead"; }
-  else if (c.tag === 'hot') { score = 85; label = "Ready to Buy Pipeline"; }
-  else if (c.tag === 'converted') { score = 100; label = "Converted Purchase"; }
-  else if (c.tag === 'vip') { score = 95; label = "VIP Client"; }
-  else if (c.tag === 'inactive') { score = 5; label = "Cold Lead"; }
-  
-  // Add weight if notes, phone, or budget exists
-  if (c.phone) score += 5;
-  if (c.name) score += 5;
-  if (c.budget) score += 5;
+  if (c.tag === 'active')       { label = "Active — Engaged Now"; }
+  else if (c.tag === 'follow_up')   { label = "Follow-Up — Needs Nudge"; }
+  else if (c.tag === 'recoverable') { label = "Recoverable — Win Back"; }
+  else if (c.tag === 'normal')      { label = "Normal — Browsing"; }
   
   score = Math.min(100, score);
   
   const circle = document.getElementById('leadScoreCircle');
-  circle.innerText = score;
   document.getElementById('leadScoreLabel').innerText = label;
   
-  // Dynamic color for score circle
-  if (score >= 80) {
-    circle.style.borderColor = 'var(--success)';
-    circle.style.boxShadow = '0 0 10px var(--success-glow)';
-  } else if (score >= 40) {
-    circle.style.borderColor = 'var(--warning)';
-    circle.style.boxShadow = '0 0 10px rgba(245,158,11,0.2)';
-  } else {
-    circle.style.borderColor = 'var(--danger)';
-    circle.style.boxShadow = '0 0 10px rgba(239,68,68,0.2)';
+  let targetColor = 'var(--danger)';
+  let glowColor = 'rgba(239,68,68,0.3)';
+  if (score >= 60) {
+    targetColor = 'var(--success)';
+    glowColor = 'var(--success-glow)';
+  } else if (score >= 30) {
+    targetColor = 'var(--warning)';
+    glowColor = 'rgba(245,158,11,0.3)';
   }
+
+  circle.style.setProperty('--score-color', targetColor);
+  circle.style.boxShadow = `0 0 15px ${glowColor}`;
+  
+  // Animate score counter and ring
+  const span = circle.querySelector('span');
+  let currentVal = 0;
+  const duration = 800; // ms
+  const interval = 20;
+  const steps = duration / interval;
+  const increment = score / steps;
+  
+  clearInterval(circle.dataset.animId);
+  
+  if (score === 0) {
+    span.innerText = "0";
+    circle.style.setProperty('--score', 0);
+    return;
+  }
+  
+  const timer = setInterval(() => {
+    currentVal += increment;
+    if (currentVal >= score) {
+      currentVal = score;
+      clearInterval(timer);
+    }
+    span.innerText = Math.floor(currentVal);
+    circle.style.setProperty('--score', currentVal);
+  }, interval);
+  
+  circle.dataset.animId = timer;
 }
 
 function closeDetail() {
@@ -1145,23 +1343,47 @@ document.getElementById('txtFollowup').addEventListener('input', (e) => {
 
 async function saveTag() {
   if(!currentSession) return;
+  const btn = document.getElementById('btnSaveTag');
+  const orig = btn.innerHTML;
   const tag = document.getElementById('tagSelect').value;
-  const resp = await apiFetch('/api/tag', { method:'POST', body: JSON.stringify({session_prefix: currentSession, tag}) });
-  if(!resp) return;
-  showToast("Tag and status updated successfully.");
-  loadAll();
+  try {
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    const resp = await apiFetch('/api/tag', { method:'POST', body: JSON.stringify({session_prefix: currentSession, tag}) });
+    if(!resp) {
+      btn.disabled = false; btn.innerHTML = orig; return;
+    }
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
+    showToast("Tag and status updated successfully.");
+    loadAll();
+    setTimeout(() => { btn.disabled = false; btn.innerHTML = orig; }, 1800);
+  } catch (err) {
+    console.error(err);
+    btn.disabled = false; btn.innerHTML = orig;
+    showToast('Failed to update tag');
+  }
 }
 
 async function saveInfo() {
   if(!currentSession) return;
+  const btn = document.getElementById('btnSaveInfo');
+  const orig = btn.innerHTML;
   const name = document.getElementById('inpName').value;
   const phone = document.getElementById('inpPhone').value;
   const notes = document.getElementById('inpNotes').value;
-  const resp = await apiFetch('/api/save', { method:'POST', body: JSON.stringify({session_prefix: currentSession, name, phone, notes}) });
-  if(!resp) return;
-  showToast("Lead file updated successfully.");
-  updateWaLink(phone, document.getElementById('txtFollowup').value);
-  loadAll();
+  try {
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    const resp = await apiFetch('/api/save', { method:'POST', body: JSON.stringify({session_prefix: currentSession, name, phone, notes}) });
+    if(!resp) { btn.disabled = false; btn.innerHTML = orig; return; }
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
+    showToast("Lead file updated successfully.");
+    updateWaLink(phone, document.getElementById('txtFollowup').value);
+    loadAll();
+    setTimeout(() => { btn.disabled = false; btn.innerHTML = orig; }, 1800);
+  } catch (err) {
+    console.error(err);
+    btn.disabled = false; btn.innerHTML = orig;
+    showToast('Failed to save profile');
+  }
 }
 
 async function markSent(prefix, e) {
@@ -1252,6 +1474,8 @@ function closeProductModal() {
 }
 
 async function saveProduct() {
+  const btn = document.getElementById('btnSaveProduct');
+  const orig = btn ? btn.innerHTML : null;
   const id = document.getElementById('prodId').value;
   const category = document.getElementById('prodCategory').value;
   const brand = document.getElementById('prodBrand').value;
@@ -1267,24 +1491,32 @@ async function saveProduct() {
   
   const payload = { category, brand, in_stock, stock_count, image_url, content };
   
-  let resp;
-  if(id) {
-    resp = await apiFetch(`/api/kb/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
-  } else {
-    resp = await apiFetch('/api/kb', { method: 'POST', body: JSON.stringify(payload) });
+  try {
+    if(btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Syncing...'; }
+    let resp;
+    if(id) {
+      resp = await apiFetch(`/api/kb/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    } else {
+      resp = await apiFetch('/api/kb', { method: 'POST', body: JSON.stringify(payload) });
+    }
+    if(!resp) { if(btn) { btn.disabled = false; btn.innerHTML = orig; } return; }
+    if(btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Synced';
+    showToast(id ? "✅ Success! Product updated & AI memory synchronized." : "🎉 Success! Product added & AI memory synchronized.");
+    closeProductModal();
+    loadCatalog();
+    setTimeout(() => { if(btn) { btn.disabled = false; btn.innerHTML = orig; } }, 1600);
+  } catch (err) {
+    console.error(err);
+    if(btn) { btn.disabled = false; btn.innerHTML = orig; }
+    showToast('Failed to save product');
   }
-  
-  if(!resp) return;
-  showToast(id ? "Product updated & AI memory successfully synchronized." : "Product added & AI memory successfully synchronized.");
-  closeProductModal();
-  loadCatalog();
 }
 
 async function deleteProduct(id) {
   if(!confirm("Are you sure you want to delete this product? This will erase it from the AI's semantic knowledge base instantly.")) return;
   const resp = await apiFetch(`/api/kb/${id}`, { method: 'DELETE' });
   if(!resp) return;
-  showToast("Product successfully purged from AI memory catalog.");
+  showToast("🗑️ Success! Product successfully purged from AI memory catalog.");
   loadCatalog();
 }
 
@@ -1409,8 +1641,172 @@ function showToast(msg) {
   setTimeout(() => t.style.display = 'none', 4000);
 }
 
+// ── Follow-up Strategy & Custom Templates logic ──
+const defaultTemplates = {
+  pulse: "Hi {name}! It's HelloAgain AI. You were checking out {topic} earlier. Still interested? We'd love to help.",
+  discount: "Hey {name}! I noticed you were looking at {topic}. I'd love to offer you a special discount of 10% if you're ready to wrap this up today!",
+  negotiate: "Hi {name}! Let's make this work for you. I'm open to discussing the price/budget for {topic} — what did you have in mind?",
+  testimonial: "Hi {name}! Don't just take our word for it. Here is what one of our happy customers said about {topic}: \"Amazing quality and super fast delivery!\" Let me know if you want to try it out.",
+  reengage: "Hey {name}! It's been a while. We just restocked {topic} and got some new collections in. Would you like to check them out?"
+};
+
+let customTemplates = {};
+let activeStrategy = 'pulse';
+let currentCustomerDetails = null; // Stored customer object
+
+function loadCustomTemplates() {
+  const stored = localStorage.getItem('helloagain_custom_templates');
+  if (stored) {
+    try {
+      customTemplates = JSON.parse(stored);
+    } catch(e) {
+      customTemplates = {};
+    }
+  }
+  
+  // Fill missing keys with default templates
+  for (const key in defaultTemplates) {
+    if (!customTemplates[key]) {
+      customTemplates[key] = defaultTemplates[key];
+    }
+    const inputEl = document.getElementById(`temp-${key}`);
+    if (inputEl) {
+      inputEl.value = customTemplates[key];
+    }
+  }
+}
+
+function saveCustomTemplates() {
+  for (const key in defaultTemplates) {
+    const inputEl = document.getElementById(`temp-${key}`);
+    if (inputEl) {
+      customTemplates[key] = inputEl.value;
+    }
+  }
+  localStorage.setItem('helloagain_custom_templates', JSON.stringify(customTemplates));
+  
+  // Re-apply strategy to text field with updated template
+  if (currentCustomerDetails) {
+    applyStrategy(activeStrategy);
+  }
+}
+
+function toggleTemplateCustomizer() {
+  const el = document.getElementById('templateCustomizer');
+  if (el) {
+    el.classList.toggle('open');
+  }
+}
+
+function renderTemplate(template, customer) {
+  if (!template) return '';
+  const name = customer.name || 'there';
+  const topic = customer.topic || 'your inquiry';
+  const budget = customer.budget || '';
+  
+  return template
+    .replace(/{name}/g, name)
+    .replace(/{topic}/g, topic)
+    .replace(/{budget}/g, budget);
+}
+
+function selectStrategy(strategyId) {
+  activeStrategy = strategyId;
+  
+  // Update UI active buttons
+  document.querySelectorAll('.strategy-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  const activeBtn = document.getElementById(`strat-${strategyId}`);
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+  }
+  
+  applyStrategy(strategyId);
+}
+
+function applyStrategy(strategyId) {
+  if (!currentCustomerDetails) return;
+  
+  const template = customTemplates[strategyId] || defaultTemplates[strategyId];
+  const rendered = renderTemplate(template, currentCustomerDetails);
+  
+  const textarea = document.getElementById('txtFollowup');
+  if (textarea) {
+    textarea.value = rendered;
+    updateWaLink(currentCustomerDetails.phone, rendered);
+  }
+}
+
+async function logSelectedCustomerOutreach() {
+  if (!currentSession) {
+    showToast("No active customer selected.");
+    return;
+  }
+  const btn = document.getElementById('btnLogSent');
+  const orig = btn.innerHTML;
+  try {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging...';
+    const resp = await apiFetch('/api/mark-sent', {
+      method: 'POST',
+      body: JSON.stringify({ session_prefix: currentSession })
+    });
+    if (!resp) {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+      return;
+    }
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Logged';
+    showToast("Outreach logged as sent!");
+    
+    // Refresh details for current customer to update followup_sent state
+    const data = await apiFetch(`/api/customer/${currentSession}`);
+    if (data) {
+      currentCustomerDetails = data.customer;
+      // Re-run sequencing recommendation
+      updateStrategyRecommendation(data.customer);
+    }
+    
+    loadAll();
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }, 1800);
+  } catch (err) {
+    console.error(err);
+    btn.disabled = false;
+    btn.innerHTML = orig;
+    showToast('Failed to log outreach');
+  }
+}
+
+function updateStrategyRecommendation(customer) {
+  // Clear recommended flags
+  document.querySelectorAll('.strategy-btn').forEach(btn => {
+    btn.classList.remove('recommended');
+  });
+  
+  // Decide recommendation based on state
+  let recommended = 'pulse';
+  if (customer.followup_sent === 1) {
+    recommended = 'discount'; // Closer recommended next since pulse is sent
+  }
+  
+  const btn = document.getElementById(`strat-${recommended}`);
+  if (btn) {
+    btn.classList.add('recommended');
+  }
+  
+  // Automatically trigger recommendation for fresh select
+  selectStrategy(recommended);
+}
+
 // Startup
-window.onload = loadAll;
+window.onload = () => {
+  loadCustomTemplates();
+  loadAll();
+};
 </script>
 </body>
 </html>

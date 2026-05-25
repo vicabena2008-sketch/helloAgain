@@ -61,8 +61,8 @@ def init_db():
             phone         TEXT,
             first_seen    TEXT    NOT NULL,
             last_seen     TEXT    NOT NULL,
-            status        TEXT    DEFAULT 'new',
-            tag           TEXT    DEFAULT 'new',
+            status        TEXT    DEFAULT 'normal',
+            tag           TEXT    DEFAULT 'normal',
             topic         TEXT,
             budget        TEXT,
             turn_count    INTEGER DEFAULT 0,
@@ -97,10 +97,11 @@ def init_db():
         """)
         # Add new columns if upgrading from old DB
         for col, definition in [
-            ("followup_sent", "INTEGER DEFAULT 0"),
-            ("notes",         "TEXT"),
-            ("phone",         "TEXT"),
-            ("name",          "TEXT"),
+            ("followup_sent",    "INTEGER DEFAULT 0"),
+            ("notes",            "TEXT"),
+            ("phone",            "TEXT"),
+            ("name",             "TEXT"),
+            ("engagement_score", "INTEGER DEFAULT 0"),
         ]:
             try:
                 con.execute(f"ALTER TABLE customers ADD COLUMN {col} {definition}")
@@ -138,8 +139,8 @@ def upsert_customer(session_id: str, **kwargs):
             vals = list(kwargs.values()) + [now, session_id]
             con.execute(f"UPDATE customers SET {sets}, last_seen=? WHERE session_id=?", vals)
         else:
-            kwargs.setdefault("status", "new")
-            kwargs.setdefault("tag", "new")
+            kwargs.setdefault("status", "normal")
+            kwargs.setdefault("tag", "normal")
             cols = ", ".join(["session_id", "first_seen", "last_seen"] + list(kwargs.keys()))
             placeholders = ", ".join(["?"] * (3 + len(kwargs)))
             vals = [session_id, now, now] + list(kwargs.values())
@@ -200,6 +201,15 @@ def mark_followup_sent(session_id: str):
         )
 
 
+def save_engagement_score(session_id: str, score: int):
+    """Persist the live AI engagement score (0-100) for this session."""
+    with _conn() as con:
+        con.execute(
+            "UPDATE customers SET engagement_score=? WHERE session_id=?",
+            (score, session_id),
+        )
+
+
 def get_all_customers():
     with _conn() as con:
         rows = con.execute("SELECT * FROM customers ORDER BY last_seen DESC").fetchall()
@@ -207,12 +217,15 @@ def get_all_customers():
 
 
 def get_silent_customers(hours: int = 24):
-    """Customers tagged hot/warm who haven't been seen in `hours` hours."""
+    """
+    Customers tagged 'active' or 'follow_up' who haven't been seen in `hours` hours.
+    These are the priority recovery targets surfaced in the dashboard.
+    """
     cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
     with _conn() as con:
         rows = con.execute(
             """SELECT * FROM customers
-               WHERE tag IN ('hot','warm')
+               WHERE tag IN ('active','follow_up','recoverable')
                AND last_seen < ?
                AND converted = 0
                AND followup_sent = 0
@@ -290,20 +303,38 @@ def parse_budget_number(budget_str: str) -> float:
 
 def get_analytics():
     with _conn() as con:
-        total      = con.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
-        hot        = con.execute("SELECT COUNT(*) FROM customers WHERE tag='hot'").fetchone()[0]
-        warm       = con.execute("SELECT COUNT(*) FROM customers WHERE tag='warm'").fetchone()[0]
-        converted  = con.execute("SELECT COUNT(*) FROM customers WHERE tag='converted'").fetchone()[0]
-        vip        = con.execute("SELECT COUNT(*) FROM customers WHERE tag='vip'").fetchone()[0]
-        inactive   = con.execute("SELECT COUNT(*) FROM customers WHERE tag='inactive'").fetchone()[0]
-        silent     = len(get_silent_customers(24))
-        with_phone = con.execute("SELECT COUNT(*) FROM customers WHERE phone IS NOT NULL AND phone != ''").fetchone()[0]
-        
-        # Calculate potential pipeline value
+        total        = con.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+        active       = con.execute("SELECT COUNT(*) FROM customers WHERE tag='active'").fetchone()[0]
+        follow_up    = con.execute("SELECT COUNT(*) FROM customers WHERE tag='follow_up'").fetchone()[0]
+        recoverable  = con.execute("SELECT COUNT(*) FROM customers WHERE tag='recoverable'").fetchone()[0]
+        normal       = con.execute("SELECT COUNT(*) FROM customers WHERE tag='normal'").fetchone()[0]
+        converted    = con.execute("SELECT COUNT(*) FROM customers WHERE converted=1").fetchone()[0]
+        silent       = len(get_silent_customers(24))
+        with_phone   = con.execute("SELECT COUNT(*) FROM customers WHERE phone IS NOT NULL AND phone != ''").fetchone()[0]
+
+        # ── Revenue Intelligence ───────────────────────────────────────────────
+        # Potential: budget sum from active/follow-up leads not yet converted
         potential_revenue = 0.0
-        budget_rows = con.execute("SELECT budget FROM customers WHERE tag IN ('hot', 'warm') AND converted = 0").fetchall()
-        for r in budget_rows:
+        pot_rows = con.execute(
+            "SELECT budget FROM customers WHERE tag IN ('active','follow_up') AND converted=0"
+        ).fetchall()
+        for r in pot_rows:
             potential_revenue += parse_budget_number(r[0])
+
+        # Recovered: budget sum of previously recoverable/follow-up leads now converted
+        recovered_revenue = 0.0
+        rec_rows = con.execute(
+            "SELECT budget FROM customers WHERE tag IN ('recoverable', 'follow_up') AND converted=1"
+        ).fetchall()
+        for r in rec_rows:
+            recovered_revenue += parse_budget_number(r[0])
+
+        # Avg engagement score
+        avg_score = con.execute("SELECT AVG(engagement_score) FROM customers").fetchone()[0] or 0
+        try:
+            avg_score = round(float(avg_score), 1)
+        except Exception:
+            avg_score = 0
 
         avg_turns = con.execute("SELECT AVG(turn_count) FROM customers").fetchone()[0] or 0
         try:
@@ -313,31 +344,46 @@ def get_analytics():
 
         percent_converted = round((converted / total) * 100, 1) if total else 0
 
-        # daily active: customers seen in the last 24 hours
+        # Daily active: customers seen in the last 24 hours
         cutoff = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
-        daily_active = con.execute("SELECT COUNT(*) FROM customers WHERE last_seen >= ?", (cutoff,)).fetchone()[0]
+        daily_active = con.execute(
+            "SELECT COUNT(*) FROM customers WHERE last_seen >= ?", (cutoff,)
+        ).fetchone()[0]
 
-        # top topics
+        # Top topics
         rows = con.execute(
-            "SELECT topic, COUNT(*) as c FROM customers WHERE topic IS NOT NULL AND topic != '' GROUP BY topic ORDER BY c DESC LIMIT 5"
+            "SELECT topic, COUNT(*) as c FROM customers "
+            "WHERE topic IS NOT NULL AND topic != '' "
+            "GROUP BY topic ORDER BY c DESC LIMIT 5"
         ).fetchall()
-        top_topics = [ {"topic": r[0], "count": r[1]} for r in rows ]
+        top_topics = [{"topic": r[0], "count": r[1]} for r in rows]
 
         return {
-            "total": total,
-            "hot": hot,
-            "warm": warm,
-            "converted": converted,
-            "vip": vip,
-            "inactive": inactive,
-            "silent": silent,
-            "with_phone": with_phone,
-            "avg_turns": avg_turns,
-            "percent_converted": percent_converted,
-            "daily_active": daily_active,
-            "top_topics": top_topics,
-            "potential_revenue_raw": potential_revenue,
-            "potential_revenue": f"₦{potential_revenue:,.0f}",
+            # New 4-class counts
+            "total":              total,
+            "active":             active,
+            "follow_up":          follow_up,
+            "recoverable":        recoverable,
+            "normal":             normal,
+            "converted":          converted,
+            # Legacy fields kept so existing dashboard widgets don't break
+            "hot":                active,
+            "warm":               follow_up,
+            "inactive":           normal,
+            "vip":                0,
+            # Engagement & activity
+            "silent":             silent,
+            "with_phone":         with_phone,
+            "avg_turns":          avg_turns,
+            "avg_engagement":     avg_score,
+            "percent_converted":  percent_converted,
+            "daily_active":       daily_active,
+            "top_topics":         top_topics,
+            # Revenue Intelligence
+            "potential_revenue_raw":  potential_revenue,
+            "potential_revenue":      f"₦{potential_revenue:,.0f}",
+            "recovered_revenue_raw":  recovered_revenue,
+            "recovered_revenue":      f"₦{recovered_revenue:,.0f}",
         }
 
 
