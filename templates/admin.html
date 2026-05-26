@@ -787,6 +787,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
             <div class="lead-score-ring" id="leadScoreCircle" style="--score: 0; --score-color: var(--primary);"><span>--</span></div>
           </div>
 
+          <div style="display:flex; gap:8px; align-items:center; margin:10px 0 16px 0;">
+            <button id="btnRunAnalysis" class="btn btn-sec" style="padding:8px 12px; font-size:0.85rem;" onclick="runAnalysis()"><i class="fa-solid fa-microscope"></i> Run AI Analysis</button>
+            <button id="btnGenFollowup" class="btn" style="padding:8px 12px; font-size:0.85rem;" onclick="generateFollowupFromAnalysis()"><i class="fa-solid fa-robot"></i> Suggest Follow-up</button>
+          </div>
+
+          <div id="aiAnalysisSummary" style="background:rgba(255,255,255,0.02); border:1px solid var(--border); padding:12px; border-radius:8px; font-size:0.85rem; color:var(--text-muted); display:none; margin-bottom:16px;"></div>
+
           <div style="background:rgba(255,255,255,0.015); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:20px;">
             <h4 style="margin-bottom:16px;font-size:0.9rem;font-weight:700;"><i class="fa-solid fa-id-badge"></i> Update Customer File</h4>
             <div style="display:flex; gap:10px; margin-bottom:16px;">
@@ -1383,6 +1390,69 @@ async function saveInfo() {
     console.error(err);
     btn.disabled = false; btn.innerHTML = orig;
     showToast('Failed to save profile');
+  }
+}
+
+async function runAnalysis() {
+  if (!currentSession) { showToast('No customer selected.'); return; }
+  const btn = document.getElementById('btnRunAnalysis');
+  const orig = btn.innerHTML;
+  try {
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...';
+    const resp = await apiFetch(`/api/analyze/${currentSession}`, { method: 'POST' });
+    if (!resp || !resp.analysis) {
+      showToast('Analysis failed or returned no data.');
+      btn.disabled = false; btn.innerHTML = orig; return;
+    }
+
+    const a = resp.analysis;
+    // Display summary
+    const summaryEl = document.getElementById('aiAnalysisSummary');
+    summaryEl.style.display = 'block';
+    summaryEl.innerHTML = `<strong style="color:var(--text-main);">Intent:</strong> ${a.get('intent_summary') || a.intent_summary || a.intent || 'N/A'}<br/><strong style="color:var(--text-main);">Next action:</strong> ${a.next_action || '—'}<br/><strong style="color:var(--text-main);">Confidence:</strong> ${a.confidence || '—'}`;
+
+    // Update UI scores and tag
+    if (!currentCustomerDetails) currentCustomerDetails = {};
+    currentCustomerDetails.engagement_score = a.engagement_score || a.get?.('engagement_score') || currentCustomerDetails.engagement_score || 0;
+    currentCustomerDetails.tag = a.tag || a.get?.('tag') || currentCustomerDetails.tag || 'normal';
+
+    // Re-render score and strategy
+    calculateLeadScore(currentCustomerDetails);
+    updateStrategyRecommendation(currentCustomerDetails);
+
+    // Pre-fill follow-up suggestion area with next_action if empty
+    const txt = document.getElementById('txtFollowup');
+    if (txt && (!txt.value || txt.value.trim().length < 5)) {
+      txt.value = a.next_action || '';
+      updateWaLink(document.getElementById('inpPhone').value, txt.value);
+    }
+
+    showToast('AI analysis complete.');
+  } catch (err) {
+    console.error(err);
+    showToast('AI analysis failed.');
+  } finally {
+    btn.disabled = false; btn.innerHTML = orig;
+  }
+}
+
+async function generateFollowupFromAnalysis() {
+  if (!currentSession) { showToast('No customer selected.'); return; }
+  const btn = document.getElementById('btnGenFollowup');
+  const orig = btn.innerHTML;
+  try {
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+    const resp = await apiFetch('/api/generate-followup', { method: 'POST', body: JSON.stringify({ session_prefix: currentSession }) });
+    if (!resp || !resp.message) { showToast('Failed to generate follow-up.'); return; }
+    const txt = document.getElementById('txtFollowup');
+    txt.value = resp.message;
+    updateWaLink(document.getElementById('inpPhone').value, resp.message);
+    showToast('Follow-up drafted. Edit and send when ready.');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to generate follow-up.');
+  } finally {
+    btn.disabled = false; btn.innerHTML = orig;
   }
 }
 

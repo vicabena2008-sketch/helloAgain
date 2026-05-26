@@ -437,6 +437,23 @@ def api_generate_followup():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/analyze/<session_prefix>", methods=["POST", "GET"])
+@login_required
+def api_analyze(session_prefix):
+    customers = get_all_customers()
+    match = next((c for c in customers if c["session_id"].startswith(session_prefix)), None)
+    if not match:
+        return jsonify({"error": "Not found"}), 404
+
+    from analytics import analyze_and_update_tag
+    try:
+        result = analyze_and_update_tag(match["session_id"])
+        return jsonify({"ok": True, "analysis": result})
+    except Exception as e:
+        logging.exception(f"/api/analyze failed for {session_prefix}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 # ── Knowledge Base Import/Export ───────────────────────────────────────────────
 @app.route("/api/kb/export", methods=["GET"])
 @login_required
