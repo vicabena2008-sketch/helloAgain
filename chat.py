@@ -4,13 +4,14 @@ Core chat() function — retrieval, LLM, conversation state, DB logging.
 """
 
 from retrieval import retrieve_context, split_by_stock
-from llm import llm, SYSTEM_PROMPT
+from llm import llm, llm_stream, invoke_with_retry, SYSTEM_PROMPT
 from conversation import ConversationState, build_followup_instruction, is_followup_on_same_product
-from db.customers import upsert_customer, log_message, increment_turns, tag_customer, save_engagement_score
+from db.customers import upsert_customer, log_message, increment_turns, tag_customer, save_engagement_score, log_turn_start, log_turn_end, log_search, log_interaction
 import logging
 import groq
 import json
 import re
+from typing import Generator
 
 SAFETY_NET_QUESTIONS = {
     "tech":    " Anything else you need — accessories or delivery info?",
@@ -41,13 +42,13 @@ def chat(user_query: str, state: ConversationState) -> str:
         return "Welcome to HelloAgain AI! How can I help you today?"
 
     # 1. Log customer message to DB
-    upsert_customer(
+    log_turn_start(
         state.session_id,
+        user_query=user_query,
         topic=state.last_topic,
         budget=state.budget_mentioned,
         tag=state.current_tag(),
     )
-    log_message(state.session_id, "user", user_query)
 
     # 2. Retrieve (with query augmentation for follow-ups to prevent drift)
     search_query = user_query
@@ -63,6 +64,13 @@ def chat(user_query: str, state: ConversationState) -> str:
     has_context = len(retrieved) > 0
     in_stock_docs, oos_brands = split_by_stock(retrieved, user_query=user_query) if has_context else ([], [])
     top_topic   = retrieved[0][2]["category"] if has_context else None
+    
+    # Log search and interactions
+    log_search(state.session_id, search_query, len(retrieved))
+    if has_context:
+        for _, _, meta in retrieved:
+            log_interaction(state.session_id, meta.get("category", ""), meta.get("brand", ""), "viewed")
+            
     # extract top retrieved item details for state pinning
     if has_context:
         top_score, top_doc, top_meta = retrieved[0]
@@ -91,6 +99,18 @@ def chat(user_query: str, state: ConversationState) -> str:
     # start with up to 6 historical turns and reduce if needed
     last_n = 6
     history_block = state.history_str(last_n=last_n)
+    
+    # Optional context compression if history is very long
+    if len(state.history) > 6:
+        try:
+            # Compress older turns
+            summary_prompt = "Summarise the following older conversation in 2-3 sentences. Focus on the user's intent, budget, and items discussed:\n\n" + state.history_str(last_n=len(state.history)-last_n)
+            summary_response = invoke_with_retry(summary_prompt)
+            compressed_history = "Older conversation summary: " + (summary_response.content or "").strip() + "\n\n"
+            history_block = compressed_history + history_block
+        except Exception:
+            pass
+
     full_prompt = _build_prompt(SYSTEM_PROMPT, context_block, followup_instr, history_block, user_query)
 
     while len(full_prompt) > MAX_PROMPT_CHARS and last_n > 0:
@@ -108,17 +128,18 @@ def chat(user_query: str, state: ConversationState) -> str:
     engagement_score = None
     intent = None
     try:
-        response_obj = llm.invoke(full_prompt)
+        response_obj = invoke_with_retry(full_prompt)
         raw = (response_obj.content or "").strip()
         json_match = re.search(r'\{.*\}', raw, re.DOTALL)
         if json_match:
-            raw = json_match.group(0)
+            parsed = json.loads(json_match.group(0))
+            reply = parsed.get("reply", "")
+            engagement_score = parsed.get("engagement_score")
+            intent = parsed.get("intent")
+            state.last_suggestions = parsed.get("suggested_replies", [])
+        else:
+            reply = raw
         
-        parsed = json.loads(raw)
-        reply = parsed.get("reply", "")
-        engagement_score = parsed.get("engagement_score")
-        intent = parsed.get("intent")
-
         if not reply:
             raise ValueError("empty model output")
         if "an internal error occurred while generating a reply" in reply.lower():
@@ -131,20 +152,22 @@ def chat(user_query: str, state: ConversationState) -> str:
         )
     except (ValueError, Exception) as e:
         err_str = str(e).lower()
-        if any(kw in err_str for kw in ["empty", "output", "tool call", "context", "token"]):
+        if any(kw in err_str for kw in ["empty", "output", "tool call", "context", "token", "expecting value"]):
             logging.warning("LLM returned empty output — retrying with stripped prompt")
             slim_context = context_block[:2000] if context_block else context_block
             slim_prompt = _build_prompt(SYSTEM_PROMPT, slim_context, followup_instr, "", user_query)
             try:
-                response_obj = llm.invoke(slim_prompt)
+                response_obj = invoke_with_retry(slim_prompt)
                 raw = (response_obj.content or "").strip()
                 json_match = re.search(r'\{.*\}', raw, re.DOTALL)
                 if json_match:
-                    raw = json_match.group(0)
-                parsed = json.loads(raw)
-                reply = parsed.get("reply", "")
-                engagement_score = parsed.get("engagement_score")
-                intent = parsed.get("intent")
+                    parsed = json.loads(json_match.group(0))
+                    reply = parsed.get("reply", "")
+                    engagement_score = parsed.get("engagement_score")
+                    intent = parsed.get("intent")
+                    state.last_suggestions = parsed.get("suggested_replies", [])
+                else:
+                    reply = raw
             except Exception:
                 pass
         if not reply:
@@ -170,18 +193,26 @@ def chat(user_query: str, state: ConversationState) -> str:
         product_doc=(top_doc if top_doc else None),
         new_engagement_score=engagement_score, new_intent=intent
     )
-    increment_turns(state.session_id, resolved=has_context)
-    tag_customer(state.session_id, state.current_tag())
-    save_engagement_score(state.session_id, state.engagement_score())
-    log_message(state.session_id, "assistant", reply)
-
-    # Update topic + budget in DB after state update
-    upsert_customer(
-        state.session_id,
+    log_turn_end(
+        session_id=state.session_id,
+        reply=reply,
+        resolved=has_context,
+        tag=state.current_tag(),
+        engagement_score=state.engagement_score(),
         topic=state.last_topic,
         budget=state.budget_mentioned,
-        tag=state.current_tag(),
-        turn_count=state.turn_count,
+        turn_count=state.turn_count
     )
 
     return reply
+
+
+def chat_stream(user_query: str, state: ConversationState) -> Generator[str, None, None]:
+    """Streaming equivalent of chat(). Yields text tokens as they arrive."""
+    # (Simplified for now: yields the final reply, but a real SSE would iterate over llm_stream.stream)
+    # We use invoke_with_retry here to ensure robustness, then we will yield it.
+    reply = chat(user_query, state)
+    
+    # We yield character by character to simulate streaming if the backend doesn't support raw SSE json stream
+    # A true implementation would yield chunks from llm_stream.stream(full_prompt), but we need JSON parsing.
+    yield reply

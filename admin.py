@@ -7,9 +7,13 @@ import os
 import requests as http_requests
 import threading
 import logging
+import csv
+import io
+import json
+from datetime import datetime, timezone
 from functools import wraps
 from urllib.parse import quote
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -20,6 +24,7 @@ from db.customers import (
     update_kb_item, delete_kb_item, get_whatsapp_settings,
     save_whatsapp_settings
 )
+import db.customers
 
 app = Flask(__name__)
 app.secret_key = os.getenv("ADMIN_SECRET_KEY", "helloagain_admin_secret")
@@ -44,8 +49,12 @@ def _rebuild_everywhere():
     """
     def _worker():
         try:
-            import retrieval
-            retrieval.rebuild_index()
+            import sys
+            # Only rebuild locally if retrieval was already imported (e.g., simulator used)
+            # This avoids loading the heavy ~300MB SentenceTransformer if unused
+            if 'retrieval' in sys.modules:
+                import retrieval
+                retrieval.rebuild_index()
         except Exception:
             logging.exception("Admin: local rebuild_index() failed")
 
@@ -366,6 +375,159 @@ def api_whatsapp_settings():
     settings.setdefault("access_token", "")
     settings.setdefault("live_mode", "0")
     return jsonify(settings)
+
+
+# ── Bulk Operations ────────────────────────────────────────────────────────────
+@app.route("/api/bulk-tag", methods=["POST"])
+@login_required
+def api_bulk_tag():
+    data = request.get_json(force=True) or {}
+    session_ids = data.get("session_ids", [])
+    new_tag = data.get("tag", "")
+    if not session_ids or not new_tag:
+        return jsonify({"error": "Missing session_ids or tag"}), 400
+    for sid in session_ids:
+        tag_customer(sid, new_tag)
+    return jsonify({"ok": True, "message": f"Tagged {len(session_ids)} customers as '{new_tag}'"})
+
+
+@app.route("/api/bulk-export", methods=["GET"])
+@login_required
+def api_bulk_export():
+    customers = get_all_customers()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Session ID", "Name", "Phone", "Status", "Tag", "Topic", "Budget", "Turns", "Score", "Last Seen"])
+    for c in customers:
+        writer.writerow([
+            c.get("session_id"), c.get("name"), c.get("phone"), c.get("status"), 
+            c.get("tag"), c.get("topic"), c.get("budget"), c.get("turn_count"), 
+            c.get("engagement_score"), c.get("last_seen")
+        ])
+    return Response(output.getvalue(), mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=helloagain_customers.csv"})
+
+
+# ── AI Follow-Up Generator ──────────────────────────────────────────────────────
+@app.route("/api/generate-followup", methods=["POST"])
+@login_required
+def api_generate_followup():
+    data = request.get_json(force=True) or {}
+    session_prefix = data.get("session_prefix", "")
+    customers = get_all_customers()
+    match = next((c for c in customers if c["session_id"].startswith(session_prefix)), None)
+    if not match:
+        return jsonify({"error": "Not found"}), 404
+        
+    msgs = get_conversation(match["session_id"])
+    conversation_text = "\n".join([f"{'Customer' if m['role'] == 'user' else 'AI'}: {m['content']}" for m in msgs[-10:]])
+    
+    from llm import llm
+    prompt = f"""
+    You are an expert sales representative. Generate a personalized, friendly WhatsApp follow-up message (under 3 sentences) to re-engage this customer who has gone silent.
+    Do NOT include greetings like [Customer Name], use their actual name '{match.get("name") or "there"}' if available.
+    
+    Recent conversation:
+    {conversation_text}
+    """
+    
+    try:
+        res = llm.invoke(prompt)
+        return jsonify({"ok": True, "message": (res.content or "").strip()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ── Knowledge Base Import/Export ───────────────────────────────────────────────
+@app.route("/api/kb/export", methods=["GET"])
+@login_required
+def api_kb_export():
+    items = get_all_kb_items()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Category", "Brand", "In Stock", "Stock Count", "Image URL", "Content"])
+    for i in items:
+        writer.writerow([
+            i.get("category"), i.get("brand"), i.get("in_stock"), 
+            i.get("stock_count", ""), i.get("image_url", ""), i.get("content")
+        ])
+    return Response(output.getvalue(), mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=helloagain_kb.csv"})
+
+
+@app.route("/api/kb/import", methods=["POST"])
+@login_required
+def api_kb_import():
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    file = request.files["file"]
+    if not file.filename.endswith(".csv"):
+        return jsonify({"error": "Must be a CSV file"}), 400
+        
+    stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+    csv_input = csv.DictReader(stream)
+    count = 0
+    for row in csv_input:
+        cat = row.get("Category", "").strip().lower()
+        brand = row.get("Brand", "").strip()
+        in_stock = str(row.get("In Stock", "1")).strip() in ("1", "true", "True", "yes")
+        try:
+            stock_count = int(row.get("Stock Count", ""))
+        except:
+            stock_count = None
+        img_url = row.get("Image URL", "").strip() or None
+        content = row.get("Content", "").strip()
+        
+        if cat and brand and content:
+            add_kb_item(cat, brand, in_stock, stock_count, img_url, content)
+            count += 1
+            
+    if count > 0:
+        _rebuild_everywhere()
+        
+    return jsonify({"ok": True, "message": f"Imported {count} items successfully."})
+
+
+# ── Tasks & Notifications ───────────────────────────────────────────────────────
+@app.route("/api/tasks/schedule", methods=["POST"])
+@login_required
+def api_schedule_task():
+    data = request.get_json(force=True) or {}
+    session_id = data.get("session_id")
+    task_type = data.get("task_type")
+    scheduled_time = data.get("scheduled_time")
+    payload = data.get("payload", "")
+    if not all([session_id, task_type, scheduled_time]):
+        return jsonify({"error": "Missing fields"}), 400
+        
+    with db.customers._conn() as con:
+        con.execute(
+            "INSERT INTO scheduled_tasks (session_id, task_type, scheduled_time, payload) VALUES (?, ?, ?, ?)",
+            (session_id, task_type, scheduled_time, json.dumps(payload))
+        )
+    return jsonify({"ok": True, "message": "Task scheduled"})
+
+
+@app.route("/api/tasks/pending", methods=["GET"])
+@login_required
+def api_pending_tasks():
+    with db.customers._conn() as con:
+        rows = con.execute("SELECT * FROM scheduled_tasks WHERE status='pending' ORDER BY scheduled_time ASC").fetchall()
+        return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/tasks/<int:task_id>", methods=["DELETE"])
+@login_required
+def api_delete_task(task_id):
+    with db.customers._conn() as con:
+        con.execute("DELETE FROM scheduled_tasks WHERE id=?", (task_id,))
+    return jsonify({"ok": True})
+
+
+@app.route("/api/notifications", methods=["GET"])
+@login_required
+def api_notifications():
+    with db.customers._conn() as con:
+        rows = con.execute("SELECT * FROM notifications ORDER BY ts DESC LIMIT 20").fetchall()
+        return jsonify([dict(r) for r in rows])
 
 
 if __name__ == "__main__":

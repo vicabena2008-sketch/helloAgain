@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;overflow:hidden;}
@@ -108,10 +109,17 @@ body{
 }
 .msg-time{font-size:.65rem;color:#64748b;margin-top:4px;padding:0 4px;}
 
-.msg-img{
+.msg-img, .markdown-body img{
   margin-top:10px;border-radius:12px;max-width:280px; width:100%;
   box-shadow:0 4px 16px rgba(0,0,0,0.3);display:block;
 }
+
+/* Markdown specific styling inside bubble */
+.markdown-body p { margin-bottom: 8px; }
+.markdown-body p:last-child { margin-bottom: 0; }
+.markdown-body strong { font-weight: 600; color: #fff; }
+.markdown-body ul { padding-left: 20px; margin-bottom: 8px; }
+.markdown-body li { margin-bottom: 4px; }
 
 .suggests-label {
   font-size: 0.75rem;
@@ -175,6 +183,14 @@ body{
   transition:all .2s;white-space:nowrap;
 }
 .chip:hover{background:#4f46e5;color:#fff;border-color:#4f46e5;transform:translateY(-1px);}
+
+/* ── SUGGESTIONS ── */
+.suggestions-wrap{
+  flex-shrink:0;background:rgba(15,23,42,0.8);
+  backdrop-filter: blur(10px);
+  padding:12px 16px 14px;
+  display:none;flex-wrap:wrap;gap:8px;justify-content:center;
+}
 
 /* ── INPUT AREA ── */
 .input-area{
@@ -249,6 +265,7 @@ body{
     <button class="chip" onclick="sendStarter(this)">Bulk / wholesale pricing</button>
   </div>
 </div>
+<div class="suggestions-wrap" id="suggestionsWrap"></div>
 
 <!-- INPUT AREA -->
 <div class="input-area">
@@ -321,37 +338,95 @@ function escHtml(t){
           .replace(/\n/g,'<br/>');
 }
 
+let session_id = localStorage.getItem('helloagain_sid') || Math.random().toString(36).substring(2, 15);
+localStorage.setItem('helloagain_sid', session_id);
+
+function appendMsgStream(role){
+  const isUser = role === 'user';
+  const row    = document.createElement('div');
+  row.className= `msg-row ${role}`;
+  const avatarIcon = isUser ? 'fa-user' : 'fa-robot';
+  const avatarCls  = isUser ? 'user' : 'ai';
+  const bubbleCls  = isUser ? 'user' : 'ai';
+
+  row.innerHTML = `
+    <div class="avatar ${avatarCls}"><i class="fa-solid ${avatarIcon}"></i></div>
+    <div class="msg-col">
+      <div class="bubble ${bubbleCls} markdown-body"></div>
+      <div class="msg-time">${now()}</div>
+    </div>`;
+  chatArea.appendChild(row);
+  scrollDown();
+  return row.querySelector('.bubble');
+}
+
+async function loadSuggestions() {
+  try {
+    const res = await fetch(`/api/suggestions?sid=${session_id}`);
+    const suggs = await res.json();
+    const wrap = document.getElementById('suggestionsWrap');
+    wrap.innerHTML = '';
+    if(suggs && suggs.length > 0) {
+      suggs.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.textContent = s;
+        btn.onclick = () => { msgBox.value = s; sendMessage(); };
+        wrap.appendChild(btn);
+      });
+      wrap.style.display = 'flex';
+      scrollDown();
+    } else {
+      wrap.style.display = 'none';
+    }
+  } catch(e) {}
+}
+
 async function sendMessage(){
   const text = msgBox.value.trim();
   if(!text) return;
   msgBox.value=''; msgBox.style.height='auto';
   startersW.style.display='none';
+  document.getElementById('suggestionsWrap').style.display='none';
   sendBtn.disabled=true;
 
   appendMsg(text,'user',null);
   showTyping();
 
   try{
-    const res  = await fetch('/api/chat',{
+    const res = await fetch('/api/chat/stream',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message:text})
+      body:JSON.stringify({message:text, session_id: session_id})
     });
-    const data = await res.json();
-    hideTyping();
     
-    if (data.replies && data.replies.length > 0) {
-      for (let i = 0; i < data.replies.length; i++) {
-        const isLast = (i === data.replies.length - 1);
-        const image = isLast ? data.image_url : null;
-        const showSuggestsLabel = (i === 0 && data.replies.length > 1);
-        appendMsg(data.replies[i], 'ai', image, showSuggestsLabel);
-        if (!isLast) {
-          await new Promise(r => setTimeout(r, 600)); // Stagger delay
+    hideTyping();
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    const bubble = appendMsgStream('ai');
+    let fullText = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.substring(6));
+            if (data.token) {
+              fullText += data.token;
+              // Render markdown on the fly
+              bubble.innerHTML = marked.parse(fullText);
+              scrollDown();
+            }
+            if (data.done) {
+              loadSuggestions();
+            }
+          } catch(e) {}
         }
       }
-    } else {
-      appendMsg('Sorry, something went wrong.', 'ai', null);
     }
   }catch(e){
     hideTyping();

@@ -157,6 +157,60 @@ class ConversationState:
         self.active_brand:      str | None = None   # e.g. "food"
         self.active_category:   str | None = None   # e.g. "food"
         self.active_product_doc: str | None = None  # full KB doc for pinning
+        # ── Pro upgrades ────────────────────────────────────────────────────────
+        self.sentiment_history: list[str] = []
+        self.product_interactions: list[dict] = []
+        self.cart: list[dict] = []
+        self.last_suggestions: list[str] = []
+
+    def to_dict(self) -> dict:
+        return {
+            "session_id": self.session_id,
+            "history": self.history,
+            "last_resolved": self.last_resolved,
+            "last_topic": self.last_topic,
+            "unanswered_count": self.unanswered_count,
+            "budget_mentioned": self.budget_mentioned,
+            "intent": self.intent,
+            "llm_intent": self.llm_intent,
+            "llm_engagement_score": self.llm_engagement_score,
+            "turn_count": self.turn_count,
+            "resolved_turns": self.resolved_turns,
+            "is_returning": self.is_returning,
+            "active_product": self.active_product,
+            "active_brand": self.active_brand,
+            "active_category": self.active_category,
+            "active_product_doc": self.active_product_doc,
+            "sentiment_history": self.sentiment_history,
+            "product_interactions": self.product_interactions,
+            "cart": self.cart,
+            "last_suggestions": self.last_suggestions,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        state = cls()
+        state.session_id = data.get("session_id", state.session_id)
+        state.history = data.get("history", [])
+        state.last_resolved = data.get("last_resolved", True)
+        state.last_topic = data.get("last_topic")
+        state.unanswered_count = data.get("unanswered_count", 0)
+        state.budget_mentioned = data.get("budget_mentioned")
+        state.intent = data.get("intent", "cold")
+        state.llm_intent = data.get("llm_intent")
+        state.llm_engagement_score = data.get("llm_engagement_score")
+        state.turn_count = data.get("turn_count", 0)
+        state.resolved_turns = data.get("resolved_turns", 0)
+        state.is_returning = data.get("is_returning", False)
+        state.active_product = data.get("active_product")
+        state.active_brand = data.get("active_brand")
+        state.active_category = data.get("active_category")
+        state.active_product_doc = data.get("active_product_doc")
+        state.sentiment_history = data.get("sentiment_history", [])
+        state.product_interactions = data.get("product_interactions", [])
+        state.cart = data.get("cart", [])
+        state.last_suggestions = data.get("last_suggestions", [])
+        return state
 
     def record_turn(
         self,

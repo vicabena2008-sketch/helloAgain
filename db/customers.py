@@ -43,10 +43,73 @@ else:
     DB_PATH = _configured
 
 
+from contextlib import contextmanager
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL:
+    try:
+        import psycopg2
+        import psycopg2.extras
+    except ImportError:
+        pass
+
+class DBWrapper:
+    def __init__(self, con, is_postgres):
+        self.con = con
+        self.is_postgres = is_postgres
+
+    def execute(self, query, params=None):
+        if self.is_postgres:
+            query = query.replace("?", "%s")
+            if "INSERT OR REPLACE INTO whatsapp_settings" in query:
+                query = query.replace("INSERT OR REPLACE INTO whatsapp_settings", "INSERT INTO whatsapp_settings")
+                query += " ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"
+            
+            cursor = self.con.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+            return cursor
+        else:
+            if params:
+                return self.con.execute(query, params)
+            else:
+                return self.con.execute(query)
+
+    def executescript(self, script):
+        if self.is_postgres:
+            script = script.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
+            cursor = self.con.cursor()
+            cursor.execute(script)
+            return cursor
+        else:
+            return self.con.executescript(script)
+
+@contextmanager
 def _conn():
-    con = sqlite3.connect(DB_PATH, check_same_thread=False)
-    con.row_factory = sqlite3.Row
-    return con
+    if DATABASE_URL:
+        import psycopg2
+        import psycopg2.extras
+        con = psycopg2.connect(DATABASE_URL)
+        wrapper = DBWrapper(con, is_postgres=True)
+        try:
+            yield wrapper
+            con.commit()
+        except Exception:
+            con.rollback()
+            raise
+        finally:
+            con.close()
+    else:
+        con = sqlite3.connect(DB_PATH, check_same_thread=False)
+        con.row_factory = sqlite3.Row
+        wrapper = DBWrapper(con, is_postgres=False)
+        try:
+            with con:
+                yield wrapper
+        finally:
+            con.close()
 
 
 import re
@@ -94,6 +157,46 @@ def init_db():
             key           TEXT PRIMARY KEY,
             value         TEXT
         );
+
+        CREATE TABLE IF NOT EXISTS search_logs (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id    TEXT NOT NULL,
+            query         TEXT NOT NULL,
+            results_count INTEGER DEFAULT 0,
+            ts            TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS product_interactions (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id       TEXT NOT NULL,
+            product_category TEXT NOT NULL,
+            product_brand    TEXT NOT NULL,
+            interaction_type TEXT NOT NULL,
+            ts               TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS scheduled_tasks (
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id     TEXT NOT NULL,
+            task_type      TEXT NOT NULL,
+            scheduled_time TEXT NOT NULL,
+            status         TEXT DEFAULT 'pending',
+            payload        TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS notifications (
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            type           TEXT NOT NULL,
+            message        TEXT NOT NULL,
+            read           INTEGER DEFAULT 0,
+            ts             TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS analytics_cache (
+            session_id     TEXT PRIMARY KEY,
+            analysis_json  TEXT NOT NULL,
+            cached_at      TEXT NOT NULL
+        );
         """)
         # Add new columns if upgrading from old DB
         for col, definition in [
@@ -104,8 +207,14 @@ def init_db():
             ("engagement_score", "INTEGER DEFAULT 0"),
         ]:
             try:
+                if getattr(con, "is_postgres", False):
+                    con.execute("SAVEPOINT col_sp")
                 con.execute(f"ALTER TABLE customers ADD COLUMN {col} {definition}")
+                if getattr(con, "is_postgres", False):
+                    con.execute("RELEASE SAVEPOINT col_sp")
             except Exception:
+                if getattr(con, "is_postgres", False):
+                    con.execute("ROLLBACK TO SAVEPOINT col_sp")
                 pass
 
         # Seed knowledge base if empty
@@ -146,7 +255,6 @@ def upsert_customer(session_id: str, **kwargs):
             vals = [session_id, now, now] + list(kwargs.values())
             con.execute(f"INSERT INTO customers ({cols}) VALUES ({placeholders})", vals)
 
-
 def log_message(session_id: str, role: str, content: str):
     now = datetime.now(timezone.utc).isoformat()
     with _conn() as con:
@@ -154,6 +262,35 @@ def log_message(session_id: str, role: str, content: str):
             "INSERT INTO conversations (session_id, role, content, ts) VALUES (?,?,?,?)",
             (session_id, role, content, now),
         )
+
+def log_turn_start(session_id: str, user_query: str, topic: str, budget: str, tag: str):
+    now = datetime.now(timezone.utc).isoformat()
+    with _conn() as con:
+        row = con.execute("SELECT id FROM customers WHERE session_id=?", (session_id,)).fetchone()
+        if row:
+            con.execute("UPDATE customers SET topic=?, budget=?, tag=?, last_seen=? WHERE session_id=?", 
+                        (topic, budget, tag, now, session_id))
+        else:
+            con.execute("INSERT INTO customers (session_id, first_seen, last_seen, topic, budget, tag, status) VALUES (?,?,?,?,?,?,?)", 
+                        (session_id, now, now, topic, budget, tag, "normal"))
+        con.execute("INSERT INTO conversations (session_id, role, content, ts) VALUES (?,?,?,?)",
+                    (session_id, "user", user_query, now))
+
+def log_turn_end(session_id: str, reply: str, resolved: bool, tag: str, engagement_score: int, topic: str, budget: str, turn_count: int):
+    now = datetime.now(timezone.utc).isoformat()
+    with _conn() as con:
+        if resolved:
+            con.execute(
+                "UPDATE customers SET topic=?, budget=?, tag=?, status=?, turn_count=?, silent_turns=0, engagement_score=?, last_seen=? WHERE session_id=?",
+                (topic, budget, tag, tag, turn_count, engagement_score, now, session_id)
+            )
+        else:
+            con.execute(
+                "UPDATE customers SET topic=?, budget=?, tag=?, status=?, turn_count=?, silent_turns=silent_turns+1, engagement_score=?, last_seen=? WHERE session_id=?",
+                (topic, budget, tag, tag, turn_count, engagement_score, now, session_id)
+            )
+        con.execute("INSERT INTO conversations (session_id, role, content, ts) VALUES (?,?,?,?)",
+                    (session_id, "assistant", reply, now))
 
 
 def get_customer(session_id: str):
@@ -253,12 +390,12 @@ def get_all_kb_items():
 
 def add_kb_item(category: str, brand: str, in_stock: bool, stock_count: int = None, image_url: str = None, content: str = ""):
     with _conn() as con:
-        cursor = con.execute(
+        row = con.execute(
             """INSERT INTO knowledge_base (category, brand, in_stock, stock_count, image_url, content)
-               VALUES (?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?) RETURNING id""",
             (category, brand, 1 if in_stock else 0, stock_count, image_url, content)
-        )
-        return cursor.lastrowid
+        ).fetchone()
+        return row[0] if row else None
 
 
 def update_kb_item(item_id: int, category: str, brand: str, in_stock: bool, stock_count: int = None, image_url: str = None, content: str = ""):
@@ -386,5 +523,22 @@ def get_analytics():
             "recovered_revenue":      f"₦{recovered_revenue:,.0f}",
         }
 
+
+# ── Search & Interaction Helpers ──────────────────────────────────────────────
+def log_search(session_id: str, query: str, results_count: int):
+    now = datetime.now(timezone.utc).isoformat()
+    with _conn() as con:
+        con.execute(
+            "INSERT INTO search_logs (session_id, query, results_count, ts) VALUES (?, ?, ?, ?)",
+            (session_id, query, results_count, now)
+        )
+
+def log_interaction(session_id: str, category: str, brand: str, interaction_type: str):
+    now = datetime.now(timezone.utc).isoformat()
+    with _conn() as con:
+        con.execute(
+            "INSERT INTO product_interactions (session_id, product_category, product_brand, interaction_type, ts) VALUES (?, ?, ?, ?, ?)",
+            (session_id, category, brand, interaction_type, now)
+        )
 
 init_db()

@@ -58,6 +58,7 @@ CONVERSATION:
 
 
 def analyze_conversation(session_id: str) -> dict:
+    from db.customers import _conn
     msgs = get_conversation(session_id)
     if not msgs:
         return {
@@ -68,6 +69,17 @@ def analyze_conversation(session_id: str) -> dict:
             "next_action": "Wait for customer to initiate.",
             "confidence": "low",
         }
+        
+    last_msg_ts = msgs[-1]["ts"]
+    
+    # Check cache
+    with _conn() as con:
+        row = con.execute("SELECT analysis_json, cached_at FROM analytics_cache WHERE session_id=?", (session_id,)).fetchone()
+        if row and row["cached_at"] >= last_msg_ts:
+            try:
+                return json.loads(row["analysis_json"])
+            except:
+                pass
 
     lines = []
     for m in msgs:
@@ -102,6 +114,12 @@ def analyze_conversation(session_id: str) -> dict:
         result["engagement_score"] = max(0, min(100, int(result.get("engagement_score", 0))))
         result.setdefault("intent_summary", "Unable to determine.")
         result.setdefault("next_action", "Review conversation manually.")
+        
+        # Save to cache
+        with _conn() as con:
+            now = time.strftime('%Y-%m-%dT%H:%M:%S%z')
+            con.execute("INSERT OR REPLACE INTO analytics_cache (session_id, analysis_json, cached_at) VALUES (?, ?, ?)",
+                        (session_id, json.dumps(result), now))
 
         return result
 
