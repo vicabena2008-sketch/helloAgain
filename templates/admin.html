@@ -1,1882 +1,1747 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>HelloAgain AI — Enterprise Control Room</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-<style>
-:root {
-  --bg-main: #06050b;
-  --bg-card: rgba(14, 13, 30, 0.6);
-  --bg-card-hover: rgba(22, 21, 46, 0.85);
-  --bg-input: rgba(255, 255, 255, 0.04);
-  --bg-input-focus: rgba(255, 255, 255, 0.08);
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-glow: rgba(99, 102, 241, 0.3);
-  --accent: #d946ef;
-  --accent-hover: #c084fc;
-  --accent-glow: rgba(217, 70, 239, 0.2);
-  --success: #10b981;
-  --success-glow: rgba(16, 185, 129, 0.2);
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --border: rgba(255, 255, 255, 0.07);
-  --border-active: rgba(99, 102, 241, 0.4);
-}
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HelloAgain — Seller Co-Pilot</title>
+  <meta name="description" content="HelloAgain AI Sales Co-Pilot — understand customers, detect signals, and draft personalized follow-up messages in one click."/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-* { margin:0; padding:0; box-sizing:border-box; }
-body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background: radial-gradient(circle at 50% 0%, #171235 0%, #06050b 70%);
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  min-height: 100vh;
-  padding: 24px;
-  overflow-y: scroll;
-}
-.container { max-width: 1300px; margin: 0 auto; }
+    :root {
+      --bg:          #0a0b0f;
+      --surface:     #12141a;
+      --surface2:    #1a1d26;
+      --surface3:    #22263a;
+      --border:      rgba(255,255,255,0.07);
+      --border2:     rgba(255,255,255,0.12);
+      --text:        #f0f1f5;
+      --text-muted:  #8a8fa8;
+      --text-dim:    #5a5f70;
+      --accent:      #6c63ff;
+      --accent-glow: rgba(108,99,255,0.25);
+      --green:       #10b981;
+      --green-glow:  rgba(16,185,129,0.2);
+      --amber:       #f59e0b;
+      --amber-glow:  rgba(245,158,11,0.2);
+      --red:         #ef4444;
+      --red-glow:    rgba(239,68,68,0.2);
+      --cyan:        #06b6d4;
+      --purple:      #8b5cf6;
+      --sidebar-w:   260px;
+    }
 
-/* ── Custom Scrollbar ── */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--bg-main); }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
 
-/* ── Glass Container Styles ── */
-.glass-panel {
-  background: var(--bg-card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-  margin-bottom: 24px;
-  transition: border-color 0.3s, transform 0.2s;
-}
+    /* ── Layout ─────────────────────────────────────────────────────────────── */
+    .app { display: flex; height: 100vh; }
 
-/* ── Header ── */
-.admin-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 32px;
-  background: linear-gradient(135deg, rgba(30,27,75,0.7) 0%, rgba(15,12,41,0.7) 100%);
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 30px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-.header-titles h1 {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1.8rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #fff 0%, #c7d2fe 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.header-titles p { font-size: 0.9rem; color: var(--text-muted); margin-top: 4px; }
-.header-actions { display: flex; gap: 14px; align-items: center; }
-.badge-private {
-  background: rgba(217, 70, 239, 0.1);
-  border: 1px solid rgba(217, 70, 239, 0.3);
-  color: #f472b6;
-  padding: 6px 14px;
-  border-radius: 99px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  box-shadow: 0 0 12px rgba(217, 70, 239, 0.15);
-}
-.btn-logout {
-  background: rgba(255,255,255,0.06);
-  color: #fff;
-  border: 1px solid var(--border);
-  padding: 8px 18px;
-  border-radius: 10px;
-  cursor: pointer;
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.btn-logout:hover {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.4);
-  color: #f87171;
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.1);
-}
+    /* ── Sidebar ──────────────────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
 
-/* ── Tab Bar Navigation ── */
-.tab-bar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 24px;
-  background: rgba(255,255,255,0.02);
-  padding: 6px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  width: fit-content;
-}
-.tab-btn {
-  background: transparent;
-  color: var(--text-muted);
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.2s ease-in-out;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.tab-btn:hover {
-  color: var(--text-main);
-  background: rgba(255,255,255,0.04);
-}
-.tab-btn.active {
-  color: #fff;
-  background: var(--primary);
-  box-shadow: 0 0 15px var(--primary-glow);
-}
+    .sidebar-brand {
+      padding: 24px 20px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .brand-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .brand-name { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+    .brand-tagline { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
 
-/* ── Content View Blocks ── */
-.tab-content { display: none; }
-.tab-content.active { display: block; animation: fadeInUp 0.4s ease-out; }
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 10px;
+    }
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      padding: 10px 10px 4px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.15s ease;
+      margin-bottom: 2px;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: rgba(108,99,255,0.15); color: var(--accent); }
+    .nav-item .nav-icon { font-size: 16px; min-width: 20px; text-align: center; }
+    .nav-badge {
+      margin-left: auto;
+      background: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      min-width: 20px;
+      text-align: center;
+    }
+    .nav-badge.green { background: var(--green); }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+    .sidebar-footer {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .footer-avatar {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .footer-info { flex: 1; }
+    .footer-name { font-size: 13px; font-weight: 600; }
+    .footer-role { font-size: 11px; color: var(--text-muted); }
+    .logout-btn {
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--text-dim);
+      transition: color 0.2s;
+    }
+    .logout-btn:hover { color: var(--red); }
 
-/* ── Metrics Grid ── */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.metric-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 20px;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.2s;
-}
-.metric-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-active);
-  background: rgba(255, 255, 255, 0.04);
-}
-.metric-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; width: 4px; height: 100%;
-  background: var(--primary);
-}
-.metric-card.mc-hot::before { background: var(--danger); }
-.metric-card.mc-warm::before { background: var(--warning); }
-.metric-card.mc-conv::before { background: var(--success); }
-.metric-card.mc-revenue::before { background: #eab308; }
-.metric-card.mc-revenue {
-  background: linear-gradient(135deg, rgba(234,179,8,0.08) 0%, rgba(255,255,255,0.02) 100%);
-  border-color: rgba(234, 179, 8, 0.25);
-  grid-column: span 2;
-}
-.metric-card.mc-revenue:hover {
-  border-color: rgba(234, 179, 8, 0.5);
-  box-shadow: 0 0 15px rgba(234, 179, 8, 0.08);
-}
-.metric-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.metric-val {
-  font-size: 1.8rem;
-  font-family: 'Outfit', sans-serif;
-  font-weight: 800;
-  margin-top: 4px;
-}
-.mc-hot .metric-val { color: var(--danger); text-shadow: 0 0 10px rgba(239,68,68,0.15); }
-.mc-warm .metric-val { color: var(--warning); text-shadow: 0 0 10px rgba(245,158,11,0.15); }
-.mc-conv .metric-val { color: var(--success); text-shadow: 0 0 10px rgba(16,185,129,0.15); }
-.mc-revenue .metric-val { color: #facc15; text-shadow: 0 0 15px rgba(250,204,21,0.25); font-size: 2.2rem; }
+    /* ── Main area ────────────────────────────────────────────────────────── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-/* ── Interactive Actions ── */
-.btn {
-  background: var(--primary);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.1);
-  padding: 10px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.85rem;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
-}
-.btn:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
-}
-.btn-sec {
-  background: rgba(255,255,255,0.06);
-  color: var(--text-main);
-  border: 1px solid var(--border);
-  box-shadow: none;
-}
-.btn-sec:hover {
-  background: rgba(255,255,255,0.1);
-  border-color: rgba(255,255,255,0.2);
-  box-shadow: none;
-}
-.btn-danger {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #f87171;
-  box-shadow: none;
-}
-.btn-danger:hover {
-  background: var(--danger);
-  color: #fff;
-  border-color: transparent;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-}
+    .topbar {
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 16px;
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .topbar-title { font-size: 16px; font-weight: 700; flex: 1; }
+    .topbar-actions { display: flex; align-items: center; gap: 10px; }
 
-/* ── Table Design ── */
-.table-wrapper {
-  overflow-x: auto;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-}
-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; background: rgba(0,0,0,0.1); }
-th {
-  background: rgba(255,255,255,0.02);
-  color: var(--text-muted);
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 0.72rem;
-  letter-spacing: 0.5px;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border);
-}
-td { padding: 14px 18px; border-bottom: 1px solid var(--border); }
-tr { transition: background 0.15s; }
-tbody tr { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-tbody tr:hover { background: rgba(255, 255, 255, 0.05); cursor: pointer; backdrop-filter: blur(4px); box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.02); }
-.tag-badge {
-  padding: 4px 10px;
-  border-radius: 99px;
-  font-weight: 800;
-  font-size: 0.7rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-}
-.tag-active { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2)); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; box-shadow: 0 0 12px rgba(16, 185, 129, 0.2); }
-.tag-follow_up { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2)); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24; box-shadow: 0 0 12px rgba(245, 158, 11, 0.2); }
-.tag-recoverable { background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(2, 132, 199, 0.2)); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; box-shadow: 0 0 12px rgba(56, 189, 248, 0.2); }
-.tag-normal { background: linear-gradient(135deg, rgba(148, 163, 184, 0.15), rgba(100, 116, 139, 0.15)); border: 1px solid rgba(148, 163, 184, 0.3); color: #cbd5e1; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #7a72ff; box-shadow: 0 0 20px var(--accent-glow); }
+    .btn-ghost { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--surface3); color: var(--text); }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-green:hover { box-shadow: 0 0 20px var(--green-glow); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-icon { padding: 7px; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── Panel Controls Header ── */
-.panel-ctrl {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-}
-.panel-ctrl-title {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 700;
-  font-size: 1.15rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.panel-ctrl-title i { color: var(--primary); }
+    /* ── Content pages ────────────────────────────────────────────────────── */
+    .content { flex: 1; overflow-y: auto; padding: 28px; display: none; }
+    .content.active { display: block; }
 
-.search-field {
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 320px;
-  width: 100%;
-}
-.search-field input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text-main);
-  font-family: inherit;
-  font-size: 0.85rem;
-  width: 100%;
-}
-.search-field i { color: var(--text-muted); }
+    /* ── Stats grid ──────────────────────────────────────────────────────── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .stat-card:hover { border-color: var(--border2); }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--stat-color, var(--accent));
+    }
+    .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-bottom: 8px; }
+    .stat-value { font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+    .stat-sub { font-size: 12px; color: var(--text-dim); }
+    .stat-icon { position: absolute; right: 16px; top: 20px; font-size: 28px; opacity: 0.15; }
 
-/* ── Form Styling ── */
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.form-control {
-  width: 100%;
-  padding: 10px 14px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 0.88rem;
-  color: #fff;
-  transition: all 0.2s;
-}
-.form-control:focus {
-  outline: none;
-  border-color: var(--primary);
-  background: var(--bg-input-focus);
-  box-shadow: 0 0 10px rgba(99,102,241,0.15);
-}
-select.form-control option {
-  background: var(--bg-main);
-  color: #fff;
-}
-textarea.form-control { resize: vertical; min-height: 80px; }
+    /* ── Two-column layout ───────────────────────────────────────────────── */
+    .two-col { display: grid; grid-template-columns: 1fr 380px; gap: 20px; }
+    .three-col { display: grid; grid-template-columns: 320px 1fr 340px; gap: 20px; height: calc(100vh - 170px); }
 
-/* ── Customer Detail Grid ── */
-.detail-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 24px; }
-.chat-log {
-  background: rgba(0,0,0,0.25);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  height: 380px;
-  overflow-y: auto;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.85rem; line-height: 1.55; position: relative; }
-.msg-user { background: rgba(255,255,255,0.08); align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid rgba(255,255,255,0.05); }
-.msg-ai { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; box-shadow: 0 4px 12px rgba(99,102,241,0.2); }
-.msg-time { font-size: 0.65rem; opacity: 0.65; margin-top: 5px; display: block; text-align: right; }
+    /* ── Cards ───────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title { font-size: 14px; font-weight: 700; flex: 1; }
+    .card-body { padding: 16px; }
+    .card-scroll { overflow-y: auto; max-height: 100%; }
 
-.lead-score-gauge {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.lead-score-ring {
-  width: 58px; height: 58px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.2rem;
-  position: relative;
-  background: conic-gradient(var(--score-color, var(--primary)) calc(var(--score, 0) * 1%), rgba(255, 255, 255, 0.05) 0);
-}
-.lead-score-ring::before {
-  content: "";
-  position: absolute; inset: 4px; border-radius: 50%;
-  background: var(--bg-card);
-  box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-}
-.lead-score-ring span { position: relative; z-index: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    /* ── Signal feed ─────────────────────────────────────────────────────── */
+    .signal-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+      position: relative;
+    }
+    .signal-item:hover { background: var(--surface2); }
+    .signal-item.selected { background: rgba(108,99,255,0.08); border-left: 3px solid var(--accent); }
+    .signal-item:last-child { border-bottom: none; }
+    .signal-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+    .sig-high { background: var(--red); box-shadow: 0 0 8px var(--red-glow); }
+    .sig-medium { background: var(--amber); box-shadow: 0 0 8px var(--amber-glow); }
+    .sig-low { background: var(--cyan); }
+    .signal-content { flex: 1; min-width: 0; }
+    .signal-customer { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .signal-msg { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+    .signal-time { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+    .signal-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .badge-high { background: rgba(239,68,68,0.15); color: var(--red); }
+    .badge-medium { background: rgba(245,158,11,0.15); color: var(--amber); }
+    .badge-low { background: rgba(6,182,212,0.12); color: var(--cyan); }
 
-.mini-progress-bg {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 99px; height: 6px; width: 100%;
-  overflow: hidden; margin-top: 4px;
-}
-.mini-progress-fill {
-  height: 100%; border-radius: 99px;
-  background: var(--primary);
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-}
+    /* ── Conversation panel ─────────────────────────────────────────────── */
+    .convo-panel { display: flex; flex-direction: column; height: 100%; }
+    .convo-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .convo-avatar {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .convo-info { flex: 1; }
+    .convo-name { font-size: 14px; font-weight: 700; }
+    .convo-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .convo-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .msg-bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .msg-customer {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+    .msg-seller {
+      background: rgba(108,99,255,0.2);
+      border: 1px solid rgba(108,99,255,0.3);
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    .msg-time { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+    .msg-sender { font-size: 11px; color: var(--text-dim); margin-bottom: 3px; font-weight: 500; }
+    .convo-input-area {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+    }
+    .msg-input-wrap { display: flex; gap: 8px; width: 100%; }
+    .msg-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .msg-input:focus { border-color: var(--accent); }
+    .msg-input::placeholder { color: var(--text-dim); }
 
-/* ── Knowledge Base Catalog Tab ── */
-.catalog-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 18px;
-}
-.catalog-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.25s;
-  display: flex;
-  flex-direction: column;
-}
-.catalog-card:hover {
-  transform: translateY(-3px);
-  border-color: var(--border-active);
-  background: var(--bg-card-hover);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.5);
-}
-.catalog-card-image {
-  height: 150px;
-  background-size: cover;
-  background-position: center;
-  background-color: rgba(255,255,255,0.02);
-  position: relative;
-}
-.catalog-card-badge {
-  position: absolute;
-  top: 10px; right: 10px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.ccb-instock { background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.3); color: #10b981; }
-.ccb-oos { background: rgba(239,68,68,0.18); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
-.catalog-card-cat {
-  font-size: 0.68rem;
-  color: var(--accent);
-  text-transform: uppercase;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  margin: 14px 16px 4px;
-}
-.catalog-card-brand {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin: 0 16px 8px;
-}
-.catalog-card-content {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-  margin: 0 16px 14px;
-  flex: 1;
-}
-.catalog-card-footer {
-  padding: 12px 16px;
-  background: rgba(0,0,0,0.2);
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
+    /* ── Right Panel (actions + draft) ──────────────────────────────────── */
+    .action-panel { display: flex; flex-direction: column; height: 100%; overflow-y: auto; gap: 0; }
+    .action-cards { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .action-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .action-card:hover {
+      border-color: var(--action-color, var(--accent));
+      background: rgba(108,99,255,0.06);
+      transform: translateX(2px);
+    }
+    .action-card.loading { opacity: 0.6; cursor: wait; }
+    .action-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .action-text { flex: 1; }
+    .action-label { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .action-desc { font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+    .action-arrow { color: var(--text-dim); font-size: 14px; }
 
-/* ── Webhook Simulator Pane ── */
-.whatsapp-sim-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-}
-.sim-phone-frame {
-  background: #090812;
-  border: 8px solid #1a1936;
-  border-radius: 36px;
-  height: 520px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-  position: relative;
-}
-.sim-phone-header {
-  background: #15142d;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.sim-phone-avatar {
-  width: 34px; height: 34px; border-radius: 50%;
-  background: linear-gradient(135deg, #10b981, #059669);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1rem; color: #fff;
-}
-.sim-phone-title { font-weight: 700; font-size: 0.85rem; }
-.sim-phone-status { font-size: 0.65rem; color: var(--success); }
-.sim-phone-body {
-  flex: 1; overflow-y: auto; padding: 14px;
-  display: flex; flex-direction: column; gap: 10px;
-  background: radial-gradient(circle at center, #110e2e 0%, #06050b 100%);
-}
-.sim-phone-input-bar {
-  background: #111025;
-  padding: 12px;
-  border-top: 1px solid rgba(255,255,255,0.05);
-  display: flex; gap: 8px;
-}
-.sim-msg {
-  max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 0.78rem; line-height: 1.45;
-}
-.sim-msg-user { background: #056162; align-self: flex-end; border-bottom-right-radius: 2px; }
-.sim-msg-ai { background: #262d31; align-self: flex-start; border-bottom-left-radius: 2px; }
+    /* ── AI Intent badge ─────────────────────────────────────────────────── */
+    .intent-box {
+      margin: 14px;
+      background: rgba(108,99,255,0.1);
+      border: 1px solid rgba(108,99,255,0.25);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .intent-label { font-size: 11px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .intent-value { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .intent-stage { font-size: 12px; color: var(--text-muted); }
+    .confidence-bar { margin-top: 10px; background: var(--surface3); height: 4px; border-radius: 2px; overflow: hidden; }
+    .confidence-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.6s ease; }
+    .confidence-label { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
 
-/* ── Modal Dialog ── */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.85);
-  backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.25s ease-out;
-}
-.modal-box {
-  background: #0d0c18;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 18px;
-  padding: 28px;
-  max-width: 520px;
-  width: 90%;
-  box-shadow: 0 25px 60px rgba(0,0,0,0.8);
-  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    /* ── Draft area ──────────────────────────────────────────────────────── */
+    .draft-section {
+      margin: 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .draft-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .draft-body { padding: 12px 14px; }
+    .draft-text {
+      width: 100%;
+      min-height: 100px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: none;
+    }
+    .draft-actions { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+    .draft-placeholder {
+      padding: 20px 14px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+    .draft-placeholder .dp-icon { font-size: 32px; margin-bottom: 8px; opacity: 0.4; }
+    .draft-placeholder p { line-height: 1.5; }
 
-.modal-header {
-  display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
-}
-.modal-title { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.3rem; }
-.modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; }
-.modal-close:hover { color: #fff; }
+    /* ── Customer list ────────────────────────────────────────────────────── */
+    .customer-list { display: flex; flex-direction: column; }
+    .customer-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 20px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .customer-item:hover { background: var(--surface2); }
+    .customer-item.selected { background: rgba(108,99,255,0.08); border-left: 3px solid var(--accent); }
+    .cust-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 15px;
+      flex-shrink: 0;
+    }
+    .cust-info { flex: 1; min-width: 0; }
+    .cust-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .cust-sub { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cust-right { text-align: right; flex-shrink: 0; }
+    .health-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      margin-bottom: 4px;
+      display: inline-block;
+    }
+    .stage-tag {
+      font-size: 10px;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
 
-.empty-state { text-align: center; color: var(--text-muted); padding: 40px; font-size: 0.9rem; }
-.toast {
-  position: fixed; bottom: 24px; right: 24px;
-  background: rgba(15, 23, 42, 0.95);
-  color: #fff; border: 1px solid var(--border-active);
-  padding: 14px 24px; border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  display: none; z-index: 10000; font-size: 0.85rem;
-  font-weight: 600; animation: slideInRight 0.3s ease-out;
-}
-@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    /* ── Funnel ──────────────────────────────────────────────────────────── */
+    .funnel-wrap { padding: 16px; }
+    .funnel-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .funnel-label { width: 110px; font-size: 12px; font-weight: 600; color: var(--text-muted); flex-shrink: 0; }
+    .funnel-bar-wrap { flex: 1; background: var(--surface3); border-radius: 4px; height: 8px; overflow: hidden; }
+    .funnel-bar { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+    .funnel-count { width: 28px; font-size: 12px; font-weight: 700; text-align: right; flex-shrink: 0; }
 
-@media (max-width: 900px) {
-  .detail-grid, .whatsapp-sim-layout { grid-template-columns: 1fr; }
-}
-@media (max-width: 600px) {
-  .admin-header { flex-direction: column; text-align: center; gap: 16px; padding: 20px; }
-  .header-actions { justify-content: center; width: 100%; }
-  .panel-ctrl { flex-direction: column; gap: 12px; align-items: flex-start; }
-  .metrics-grid { grid-template-columns: 1fr 1fr; }
-  .mc-revenue { grid-column: span 2; }
-/* Strategy buttons container */
-.strategy-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.strategy-btn {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border);
-  color: var(--text-main);
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  position: relative;
-}
-.strategy-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-.strategy-btn.active {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
-  box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
-}
-.strategy-btn.recommended::after {
-  content: "Recommended";
-  position: absolute;
-  top: -8px;
-  right: -5px;
-  background: var(--success);
-  color: #fff;
-  font-size: 0.55rem;
-  padding: 1px 4px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  font-weight: 800;
-  box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
-  animation: pulse 1.5s infinite;
-}
+    /* ── Analytics ────────────────────────────────────────────────────────── */
+    .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
+    /* ── WhatsApp simulator ──────────────────────────────────────────────── */
+    .sim-wrap { max-width: 640px; }
+    .wa-thread {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .wa-header {
+      background: #075E54;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .wa-avatar {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .wa-name { font-size: 14px; font-weight: 600; color: #fff; }
+    .wa-status { font-size: 11px; color: rgba(255,255,255,0.7); }
+    .wa-messages {
+      padding: 16px;
+      min-height: 280px;
+      max-height: 360px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #0e1621;
+    }
+    .wa-msg {
+      max-width: 75%;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .wa-msg-customer {
+      background: #1f2c34;
+      color: #e9edef;
+      align-self: flex-start;
+      border-bottom-left-radius: 2px;
+    }
+    .wa-msg-seller {
+      background: #005c4b;
+      color: #e9edef;
+      align-self: flex-end;
+      border-bottom-right-radius: 2px;
+    }
+    .wa-msg-time { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 3px; text-align: right; }
+    .wa-input-row {
+      display: flex;
+      gap: 10px;
+      padding: 14px;
+      background: #1f2c34;
+      align-items: flex-end;
+    }
+    .wa-role-toggle {
+      display: flex;
+      background: var(--surface3);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .wa-role-btn {
+      flex: 1;
+      padding: 9px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .wa-role-btn.active { background: var(--accent); color: #fff; }
 
-/* Template customizer layout */
-.template-customizer {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px;
-  margin-top: 12px;
-  display: none;
-}
-.template-customizer.open {
-  display: block;
-}
-.template-customizer-title {
-  font-size: 0.8rem;
-  font-weight: 700;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.template-input-group {
-  margin-bottom: 8px;
-}
-.template-input-group label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  display: block;
-  margin-bottom: 3px;
-  text-transform: none;
-}
-.template-input-group textarea {
-  min-height: 55px;
-  font-size: 0.78rem;
-  padding: 6px 10px;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid var(--border);
-  color: #fff;
-}
-</style>
+    /* ── Loading spinner ─────────────────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Empty states ────────────────────────────────────────────────────── */
+    .empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      color: var(--text-dim);
+      text-align: center;
+    }
+    .empty .e-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+    .empty h3 { font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    .empty p { font-size: 12px; line-height: 1.5; }
+
+    /* ── Toast ───────────────────────────────────────────────────────────── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      animation: slideUp 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 320px;
+    }
+    .toast.success { border-color: rgba(16,185,129,0.4); }
+    .toast.error   { border-color: rgba(239,68,68,0.4); }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── Knowledge Base ──────────────────────────────────────────────────── */
+    .kb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+    .kb-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .kb-card:hover { border-color: var(--border2); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .kb-img { width: 100%; height: 140px; object-fit: cover; background: var(--surface3); display: flex; align-items: center; justify-content: center; font-size: 40px; color: var(--text-dim); }
+    .kb-body { padding: 14px; }
+    .kb-category { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 4px; }
+    .kb-brand { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .kb-content { font-size: 12px; color: var(--text-muted); line-height: 1.5; max-height: 60px; overflow: hidden; }
+    .kb-footer { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+    .stock-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .in-stock { background: rgba(16,185,129,0.15); color: var(--green); }
+    .out-stock { background: rgba(239,68,68,0.15); color: var(--red); }
+
+    /* ── Settings ────────────────────────────────────────────────────────── */
+    .settings-section { margin-bottom: 24px; }
+    .settings-title { font-size: 13px; font-weight: 700; margin-bottom: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 9px 13px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+    .field select option { background: var(--surface2); }
+
+    /* ── Scrollbar ───────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+    /* ── Modal ───────────────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 28px;
+      animation: modalIn 0.2s ease;
+    }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; }
+
+    /* ── Responsive tweaks ───────────────────────────────────────────────── */
+    @media (max-width: 1200px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .three-col { grid-template-columns: 280px 1fr; }
+      .action-col { display: none; }
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-  
-  <!-- ── Header ── -->
-  <div class="admin-header">
-    <div class="header-titles">
-      <h1><i class="fa-solid fa-brain" style="color:var(--primary);"></i> HelloAgain AI</h1>
-      <p>B2B SaaS Enterprise Control Panel · Lagos, Nigeria</p>
-    </div>
-    <div class="header-actions">
-      <div class="badge-private"><i class="fa-solid fa-shield-halved"></i> Live AI Sync</div>
-      <a href="#" id="logoutLink" class="btn-logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out</a>
-    </div>
-  </div>
 
-  <!-- ── Tab Navigation ── -->
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-line"></i> Pipeline Overview</button>
-    <button class="tab-btn" onclick="switchTab('catalog')"><i class="fa-solid fa-store"></i> AI Product Memory</button>
-    <button class="tab-btn" onclick="switchTab('whatsapp')"><i class="fa-brands fa-whatsapp"></i> WhatsApp Portal</button>
-  </div>
+<div class="app">
 
-  <!-- ── Tab 1: Pipeline Overview ── -->
-  <div id="tab-dashboard" class="tab-content active">
-    
-    <!-- ── Live Metrics ── -->
-    <div class="glass-panel">
-      <div class="panel-ctrl">
-        <div class="panel-ctrl-title"><i class="fa-solid fa-chart-pie"></i> Real-time Business Analytics</div>
-        <button class="btn btn-sec" onclick="loadAll()"><i class="fa-solid fa-rotate-right"></i> Refresh Stats</button>
+  <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">🎯</div>
+        <div class="brand-name">HelloAgain</div>
       </div>
-      <div class="metrics-grid" id="metricsGrid">
-        <div class="empty-state">Calculating metrics...</div>
+      <div class="brand-tagline">AI Sales Co-Pilot Dashboard</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-label">Co-Pilot</div>
+      <div class="nav-item active" data-page="copilot" onclick="showPage('copilot',this)">
+        <span class="nav-icon">🚀</span> Live Co-Pilot
+        <span class="nav-badge" id="nav-signals-count">0</span>
+      </div>
+      <div class="nav-item" data-page="customers" onclick="showPage('customers',this)">
+        <span class="nav-icon">👥</span> Customers
+      </div>
+      <div class="nav-item" data-page="simulator" onclick="showPage('simulator',this)">
+        <span class="nav-icon">📱</span> WA Simulator
+      </div>
+
+      <div class="nav-label" style="margin-top:8px;">Business</div>
+      <div class="nav-item" data-page="analytics" onclick="showPage('analytics',this)">
+        <span class="nav-icon">📊</span> Analytics
+      </div>
+      <div class="nav-item" data-page="knowledge" onclick="showPage('knowledge',this)">
+        <span class="nav-icon">📦</span> Products (KB)
+      </div>
+
+      <div class="nav-label" style="margin-top:8px;">Settings</div>
+      <div class="nav-item" data-page="settings" onclick="showPage('settings',this)">
+        <span class="nav-icon">⚙️</span> WhatsApp Setup
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="footer-avatar">S</div>
+      <div class="footer-info">
+        <div class="footer-name">Seller Portal</div>
+        <div class="footer-role">Admin Access</div>
+      </div>
+      <a href="/logout" class="logout-btn" title="Logout">→</a>
+    </div>
+  </aside>
+
+  <!-- ── Main ────────────────────────────────────────────────────────────── -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Live Co-Pilot</div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" onclick="scanSilence()" title="Scan for silent customers">🔍 Scan Silence</button>
+        <button class="btn btn-ghost btn-sm" onclick="refreshAll()">↺ Refresh</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddCustomerModal()">+ New Customer</button>
       </div>
     </div>
 
-    <!-- ── Leads Pipeline Table ── -->
-    <div class="glass-panel">
-      <div class="panel-ctrl">
-        <div class="panel-ctrl-title"><i class="fa-solid fa-address-book"></i> Active Leads Pipeline</div>
-        <div class="search-field">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="leadSearchInput" placeholder="Search by name, phone or product..." oninput="filterLeads()"/>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- PAGE: Co-Pilot                                                      -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="content active" id="page-copilot">
+      <div class="three-col" style="height: calc(100vh - 60px); padding: 20px; gap: 16px; display: grid; grid-template-columns: 300px 1fr 340px;">
+
+        <!-- Left: Signal Feed + Customers -->
+        <div class="card" style="display:flex;flex-direction:column;overflow:hidden;">
+          <div class="card-header">
+            <span style="font-size:16px;">⚡</span>
+            <div class="card-title">Sales Signals</div>
+            <button class="btn btn-ghost btn-sm btn-icon" onclick="loadSignals()" title="Refresh">↺</button>
+          </div>
+          <div style="flex:1;overflow-y:auto;" id="signal-list">
+            <div class="empty">
+              <div class="e-icon">📡</div>
+              <h3>No Signals Yet</h3>
+              <p>Log customer messages to detect sales signals</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center: Conversation View -->
+        <div class="card convo-panel" style="overflow:hidden;">
+          <div id="convo-placeholder" style="height:100%;display:flex;align-items:center;justify-content:center;">
+            <div class="empty">
+              <div class="e-icon">💬</div>
+              <h3>Select a Customer</h3>
+              <p>Click a signal or customer to view their conversation and get AI-powered recommendations</p>
+            </div>
+          </div>
+          <div id="convo-view" style="display:none;height:100%;flex-direction:column;">
+            <div class="convo-header">
+              <div class="convo-avatar" id="cv-avatar">?</div>
+              <div class="convo-info">
+                <div class="convo-name" id="cv-name">Customer</div>
+                <div class="convo-sub" id="cv-sub">Unknown stage · Health: 0</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span id="cv-stage-badge" class="stage-tag"></span>
+                <button class="btn btn-ghost btn-sm" onclick="runAIAnalysis()" id="btn-analyze">🧠 Analyze Conversation</button>
+              </div>
+            </div>
+            <div class="convo-messages" id="cv-messages"></div>
+          </div>
+        </div>
+
+        <!-- Right: Actions + Draft -->
+        <div class="card action-col" style="display:flex;flex-direction:column;overflow:hidden;">
+          <div class="card-header">
+            <span style="font-size:16px;">🎯</span>
+            <div class="card-title">Recommended Actions</div>
+          </div>
+          <div style="flex:1;overflow-y:auto;">
+            <div id="intent-box-wrap"></div>
+            <div id="action-cards-wrap">
+              <div class="empty" style="padding:30px 20px;">
+                <div class="e-icon">🎯</div>
+                <h3>No Customer Selected</h3>
+                <p>Select a customer to see recommended actions</p>
+              </div>
+            </div>
+            <div id="draft-wrap">
+              <div class="draft-section">
+                <div class="draft-header">✍️ AI Message Draft</div>
+                <div class="draft-placeholder" id="draft-placeholder">
+                  <div class="dp-icon">✨</div>
+                  <p>Click an action button above to generate a personalized draft message</p>
+                </div>
+                <div id="draft-content" style="display:none;">
+                  <div class="draft-body">
+                    <textarea class="draft-text" id="draft-textarea" rows="5" placeholder="AI draft will appear here..."></textarea>
+                  </div>
+                  <div class="draft-actions">
+                    <button class="btn btn-green btn-sm" onclick="copyDraft()">📋 Copy to WhatsApp</button>
+                    <button class="btn btn-ghost btn-sm" onclick="clearDraft()">Clear</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- PAGE: Customers                                                     -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="content" id="page-customers">
+      <div class="two-col" style="height:calc(100vh - 60px);padding:20px;gap:16px;">
+        <div class="card" style="display:flex;flex-direction:column;overflow:hidden;">
+          <div class="card-header">
+            <span>👥</span>
+            <div class="card-title">All Customers</div>
+            <span id="cust-count" style="font-size:12px;color:var(--text-dim);">0 customers</span>
+          </div>
+          <div style="flex:1;overflow-y:auto;overflow-x:hidden;" id="customer-list-wrap"></div>
+        </div>
+        <div class="card" style="overflow-y:auto;">
+          <div id="cust-detail-wrap">
+            <div class="empty" style="padding:60px 20px;">
+              <div class="e-icon">👤</div>
+              <h3>Select a Customer</h3>
+              <p>Click on any customer to view details and manage their journey</p>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Customer Status</th>
-              <th>Full Name</th>
-              <th>WhatsApp Number</th>
-              <th>Product Interest</th>
-              <th>Budget Status</th>
-              <th>Score</th>
-              <th>Last Contact</th>
-            </tr>
-          </thead>
-          <tbody id="allCustomersTbody"></tbody>
-        </table>
-        <div style="text-align: center; margin: 15px 0;">
-          <button id="viewMoreBtn" class="btn btn-sec" onclick="viewMoreCustomers()" style="display:none;">Load More Leads</button>
-        </div>
-      </div>
     </div>
 
-    <!-- ── Detail Panel (Conditional Display) ── -->
-    <div class="glass-panel" id="detailPanel" style="display:none;">
-      <div class="panel-ctrl">
-        <div class="panel-ctrl-title"><i class="fa-solid fa-user-gear"></i> Lead Management Panel: <span id="lblSession" style="color:var(--primary); font-family:monospace;"></span></div>
-        <button class="btn btn-sec" style="padding:6px 12px; font-size: 0.8rem;" onclick="closeDetail()"><i class="fa-solid fa-xmark"></i> Hide Details</button>
-      </div>
-      <div class="sec-body detail-grid">
-        
-        <!-- Left Column: Chat Log -->
-        <div>
-          <h4 style="margin-bottom:12px;font-size:0.9rem;font-weight:600;"><i class="fa-solid fa-comments"></i> Conversation History</h4>
-          <div class="chat-log" id="chatLog"></div>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- PAGE: WhatsApp Simulator                                            -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="content" id="page-simulator">
+      <div style="padding:24px;max-width:700px;">
+        <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;">WhatsApp Conversation Simulator</h2>
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">Log conversations manually to test signal detection and AI recommendations</p>
+
+        <div class="card" style="margin-bottom:16px;padding:16px;">
+          <div class="field">
+            <label>Customer Session ID (phone or unique ID)</label>
+            <input type="text" id="sim-session" placeholder="e.g. wa-08012345678" value="wa-08012345678"/>
+          </div>
+          <div class="field">
+            <label>Customer Name (optional)</label>
+            <input type="text" id="sim-name" placeholder="e.g. Amaka"/>
+          </div>
         </div>
-        
-        <!-- Right Column: Lead Scoring and Tools -->
-        <div>
-          <div class="lead-score-gauge">
+
+        <div class="wa-role-toggle" style="margin-bottom:16px;">
+          <button class="wa-role-btn active" id="role-customer" onclick="setRole('user',this)">👤 Customer Message</button>
+          <button class="wa-role-btn" id="role-seller" onclick="setRole('seller',this)">🧑‍💼 Seller Reply</button>
+        </div>
+
+        <div class="wa-thread">
+          <div class="wa-header">
+            <div class="wa-avatar">📱</div>
             <div>
-              <h4 style="font-size:0.9rem; font-weight:700; margin-bottom:2px;">AI Sales Readiness Score</h4>
-              <p style="font-size:0.75rem; color:var(--text-muted);" id="leadScoreLabel">Analyzing buyer patterns...</p>
+              <div class="wa-name" id="sim-wa-name">Customer</div>
+              <div class="wa-status">WhatsApp Simulator</div>
             </div>
-            <div class="lead-score-ring" id="leadScoreCircle" style="--score: 0; --score-color: var(--primary);"><span>--</span></div>
           </div>
-
-          <div style="display:flex; gap:8px; align-items:center; margin:10px 0 16px 0;">
-            <button id="btnRunAnalysis" class="btn btn-sec" style="padding:8px 12px; font-size:0.85rem;" onclick="runAnalysis()"><i class="fa-solid fa-microscope"></i> Run AI Analysis</button>
-            <button id="btnGenFollowup" class="btn" style="padding:8px 12px; font-size:0.85rem;" onclick="generateFollowupFromAnalysis()"><i class="fa-solid fa-robot"></i> Suggest Follow-up</button>
+          <div class="wa-messages" id="sim-messages">
+            <div style="text-align:center;color:rgba(255,255,255,0.3);font-size:12px;padding:20px;">
+              Start logging messages below ↓
+            </div>
           </div>
-
-          <div id="aiAnalysisSummary" style="background:rgba(255,255,255,0.02); border:1px solid var(--border); padding:12px; border-radius:8px; font-size:0.85rem; color:var(--text-muted); display:none; margin-bottom:16px;"></div>
-
-          <div style="background:rgba(255,255,255,0.015); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:20px;">
-            <h4 style="margin-bottom:16px;font-size:0.9rem;font-weight:700;"><i class="fa-solid fa-id-badge"></i> Update Customer File</h4>
-            <div style="display:flex; gap:10px; margin-bottom:16px;">
-              <select id="tagSelect" class="form-control" style="width:auto;flex:1;">
-                <option value="active">🟢 Active</option>
-                <option value="follow_up">🟡 Follow-Up</option>
-                <option value="recoverable">🟠 Recoverable</option>
-                <option value="normal">⚫ Normal</option>
-              </select>
-              <button id="btnSaveTag" class="btn" onclick="saveTag()"><i class="fa-solid fa-tag"></i> Set Tag</button>
-            </div>
-            <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-            <div class="form-group"><label>Customer Name</label><input type="text" id="inpName" class="form-control" placeholder="Update full name"/></div>
-            <div class="form-group"><label>WhatsApp Number</label><input type="text" id="inpPhone" class="form-control" placeholder="e.g. +2348033333333"/></div>
-            <div class="form-group"><label>Internal Admin Notes</label><textarea id="inpNotes" class="form-control" placeholder="Add custom context, delivery address or discount terms..."></textarea></div>
-            <button id="btnSaveInfo" class="btn" onclick="saveInfo()" style="width:100%;"><i class="fa-solid fa-floppy-disk"></i> Save Customer Profile</button>
-          </div>
-
-          <!-- AI Suggested Follow-up tool -->
-          <div style="background:rgba(16,185,129,0.03); border:1px solid rgba(16,185,129,0.15); padding:20px; border-radius:12px;">
-            <h4 style="margin-bottom:8px;font-size:0.9rem;color:#34d399;font-weight:700;"><i class="fa-brands fa-whatsapp"></i> AI-Drafted Retention Message</h4>
-            <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px;">Smart sales follow-up dynamically calculated based on product interest.</p>
-            
-            <!-- Follow-up Strategies Buttons Container -->
-            <div class="strategy-container" id="strategyContainer">
-              <button class="strategy-btn" id="strat-pulse" onclick="selectStrategy('pulse')">💬 Pulse Check</button>
-              <button class="strategy-btn" id="strat-discount" onclick="selectStrategy('discount')">🏷️ Discount</button>
-              <button class="strategy-btn" id="strat-negotiate" onclick="selectStrategy('negotiate')">🤝 Negotiate</button>
-              <button class="strategy-btn" id="strat-testimonial" onclick="selectStrategy('testimonial')">🌟 Testimonial</button>
-              <button class="strategy-btn" id="strat-reengage" onclick="selectStrategy('reengage')">🔄 Re-engage</button>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span style="font-size:0.75rem;color:var(--text-muted);">Edit draft message below:</span>
-              <a href="javascript:void(0)" onclick="toggleTemplateCustomizer()" style="font-size:0.75rem; color:var(--primary); text-decoration:none; font-weight:600;"><i class="fa-solid fa-sliders"></i> Customize Templates</a>
-            </div>
-
-            <!-- Template Customizer Collapsible -->
-            <div class="template-customizer" id="templateCustomizer">
-              <div class="template-customizer-title">
-                <span>Customize Strategy Templates</span>
-                <span style="font-size:0.65rem; color:var(--text-muted);">Variables: {name}, {topic}, {budget}</span>
-              </div>
-              <div class="template-input-group">
-                <label>Pulse Check Template</label>
-                <textarea id="temp-pulse" class="form-control" oninput="saveCustomTemplates()"></textarea>
-              </div>
-              <div class="template-input-group">
-                <label>Offer a Discount Template</label>
-                <textarea id="temp-discount" class="form-control" oninput="saveCustomTemplates()"></textarea>
-              </div>
-              <div class="template-input-group">
-                <label>Negotiate Price Template</label>
-                <textarea id="temp-negotiate" class="form-control" oninput="saveCustomTemplates()"></textarea>
-              </div>
-              <div class="template-input-group">
-                <label>Share Testimonial Template</label>
-                <textarea id="temp-testimonial" class="form-control" oninput="saveCustomTemplates()"></textarea>
-              </div>
-              <div class="template-input-group">
-                <label>Re-engage Template</label>
-                <textarea id="temp-reengage" class="form-control" oninput="saveCustomTemplates()"></textarea>
-              </div>
-            </div>
-
-            <textarea id="txtFollowup" class="form-control" style="margin-bottom:12px; background:rgba(0,0,0,0.2); border-color:rgba(16,185,129,0.2); color:#e2e8f0;"></textarea>
-            
-            <div style="display: flex; gap: 8px;">
-              <a id="btnWaLink" href="#" target="_blank" class="btn" style="display:inline-flex;justify-content:center;flex:1;text-decoration:none;background:#22c55e;box-shadow:0 4px 12px rgba(34,197,94,0.3);"><i class="fa-brands fa-whatsapp"></i> Open WhatsApp Web</a>
-              <button id="btnLogSent" class="btn btn-sec" style="padding:10px 14px;" onclick="logSelectedCustomerOutreach()"><i class="fa-solid fa-clipboard-check"></i> Log Sent</button>
-            </div>
-            <div id="waWarning" style="color:var(--danger);font-size:0.8rem;margin-top:8px;display:none;font-weight:600;"><i class="fa-solid fa-circle-exclamation"></i> Save a WhatsApp phone number first to trigger outreach links!</div>
+          <div class="wa-input-row">
+            <textarea class="msg-input" id="sim-input" rows="2" placeholder="Type a message and press Send..." style="background:#2a3942;border-color:transparent;color:#e9edef;"></textarea>
+            <button class="btn btn-green" onclick="simSendMessage()" id="sim-send-btn">Send</button>
           </div>
         </div>
 
+        <div id="sim-signal-result"></div>
       </div>
     </div>
 
-    <!-- ── Silent Leads Panel ── -->
-    <div class="glass-panel">
-      <div class="panel-ctrl">
-        <div class="panel-ctrl-title" style="color:var(--warning);"><i class="fa-solid fa-bell"></i> High Priority Follow-ups (Neglected Hot/Warm Leads)</div>
-      </div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Status</th>
-              <th>Name</th>
-              <th>WhatsApp Number</th>
-              <th>Time Idle</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="silentTbody"></tbody>
-        </table>
-      </div>
-    </div>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- PAGE: Analytics                                                     -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="content" id="page-analytics">
+      <div style="padding:24px;">
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card" style="--stat-color:var(--accent)">
+            <div class="stat-label">Total Customers</div>
+            <div class="stat-value" id="s-total">–</div>
+            <div class="stat-sub">All conversations</div>
+            <div class="stat-icon">👥</div>
+          </div>
+          <div class="stat-card" style="--stat-color:var(--green)">
+            <div class="stat-label">Active Leads</div>
+            <div class="stat-value" id="s-active">–</div>
+            <div class="stat-sub">Hot right now</div>
+            <div class="stat-icon">🔥</div>
+          </div>
+          <div class="stat-card" style="--stat-color:var(--amber)">
+            <div class="stat-label">Follow-Up Needed</div>
+            <div class="stat-value" id="s-followup">–</div>
+            <div class="stat-sub">Gone quiet</div>
+            <div class="stat-icon">⏰</div>
+          </div>
+          <div class="stat-card" style="--stat-color:var(--purple)">
+            <div class="stat-label">Recoverable</div>
+            <div class="stat-value" id="s-recover">–</div>
+            <div class="stat-sub">Can be won back</div>
+            <div class="stat-icon">🔄</div>
+          </div>
+        </div>
 
-  </div>
-
-  <!-- ── Tab 2: AI Product Memory (Catalog Editor) ── -->
-  <div id="tab-catalog" class="tab-content">
-    <div class="glass-panel">
-      <div class="panel-ctrl">
-        <div>
-          <h2 class="panel-ctrl-title" style="font-size:1.4rem;"><i class="fa-solid fa-warehouse"></i> Catalog Manager & AI Semantic Memory</h2>
-          <p style="font-size:0.82rem; color:var(--text-muted); margin-top:4px;">Products updated here instantly rebuild the FAISS RAG index so the Llama Sales Brain answers live customer queries with updated prices and stock counts.</p>
-        </div>
-        <button class="btn" onclick="openProductModal()"><i class="fa-solid fa-plus"></i> Add Product Item</button>
-      </div>
-
-      <div class="catalog-grid" id="catalogGrid">
-        <div class="empty-state">Loading product catalog...</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Tab 3: WhatsApp Portal ── -->
-  <div id="tab-whatsapp" class="tab-content">
-    <div class="whatsapp-sim-layout">
-      
-      <!-- Webhook settings panel -->
-      <div class="glass-panel">
-        <h2 class="panel-ctrl-title" style="font-size:1.3rem; margin-bottom:6px;"><i class="fa-solid fa-circle-nodes"></i> Meta WhatsApp Cloud API Setup</h2>
-        <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:20px;">Mount these details in your Meta Business Suite developer center to establish live automated messaging channels.</p>
-        
-        <div class="form-group">
-          <label>Callback Webhook URL</label>
-          <input type="text" id="settingWebhook" class="form-control" readonly style="background:rgba(0,0,0,0.3); color:var(--primary); font-family:monospace; font-weight:600;"/>
-        </div>
-        <div class="form-group">
-          <label>Webhook Verify Token</label>
-          <input type="text" id="settingVerifyToken" class="form-control" placeholder="Enter validation verification string"/>
-        </div>
-        <div class="form-group">
-          <label>WhatsApp Phone Number ID</label>
-          <input type="text" id="settingPhoneId" class="form-control" placeholder="e.g. 10459392019485"/>
-        </div>
-        <div class="form-group">
-          <label>Meta Permanent Access Token</label>
-          <textarea id="settingAccessToken" class="form-control" placeholder="EAAGx..." style="font-family:monospace; font-size:0.8rem;"></textarea>
-        </div>
-        <div class="form-group" style="display:flex; align-items:center; gap:10px; margin-top:20px; background:rgba(255,255,255,0.01); border:1px solid var(--border); padding:12px; border-radius:8px;">
-          <input type="checkbox" id="settingLiveMode" style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;"/>
-          <label for="settingLiveMode" style="margin:0; cursor:pointer;">Activate Live Automated Agent (Production Mode)</label>
-        </div>
-        <button class="btn" onclick="saveWhatsappSettings()" style="width:100%; margin-top:20px;"><i class="fa-solid fa-circle-check"></i> Save Integration Credentials</button>
-      </div>
-
-      <!-- Live Webhook Chat Simulator -->
-      <div class="glass-panel">
-        <h2 class="panel-ctrl-title" style="font-size:1.3rem; margin-bottom:6px;"><i class="fa-solid fa-terminal"></i> WhatsApp Integration Simulator</h2>
-        <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:20px;">Trigger simulated incoming WhatsApp chat packets to trace lead generation, intent analysis, and database storage.</p>
-        
-        <div class="whatsapp-sim-layout" style="grid-template-columns: 1fr;">
-          <div class="sim-phone-frame">
-            <div class="sim-phone-header">
-              <div class="sim-phone-avatar"><i class="fa-brands fa-whatsapp"></i></div>
+        <div class="two-col" style="gap:16px;">
+          <div class="card">
+            <div class="card-header"><span>📊</span><div class="card-title">Customer Journey Funnel</div></div>
+            <div class="funnel-wrap" id="funnel-wrap">
+              <div class="empty"><div class="e-icon">📊</div><p>Loading funnel...</p></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span>💰</span><div class="card-title">Revenue Intelligence</div></div>
+            <div class="card-body">
+              <div style="margin-bottom:20px;">
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Potential Revenue (Active Leads)</div>
+                <div style="font-size:28px;font-weight:800;color:var(--green)" id="s-potential">₦0</div>
+              </div>
+              <div style="margin-bottom:20px;">
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Avg. Engagement Score</div>
+                <div style="font-size:28px;font-weight:800;color:var(--accent)" id="s-avg-score">0</div>
+              </div>
               <div>
-                <div class="sim-phone-title">HelloAgain Sales Assistant</div>
-                <div class="sim-phone-status"><i class="fa-solid fa-circle" style="font-size:7px; vertical-align:middle; margin-right:3px;"></i> Online</div>
-              </div>
-            </div>
-            
-            <div class="sim-phone-body" id="simChatBody">
-              <div class="sim-msg sim-msg-ai">Hello! Welcome to the WhatsApp Integration Hub. You can send test queries on the keyboard below to test my sales intelligence. Try asking for phones or agbadas!</div>
-            </div>
-            
-            <div class="sim-phone-input-bar">
-              <div class="form-group" style="margin:0; flex:1; display:flex; gap:8px;">
-                <input type="text" id="simPhoneInput" class="form-control" placeholder="Test Sender Phone (e.g. 2348011112222)" style="max-width:180px; font-size:0.78rem;" value="2348022223333"/>
-                <input type="text" id="simMsgInput" class="form-control" placeholder="Type test WhatsApp message..." style="font-size:0.78rem;" onkeypress="if(event.key==='Enter') sendSimulatedWebhook()"/>
-                <button class="btn" style="padding:10px 14px;" onclick="sendSimulatedWebhook()"><i class="fa-solid fa-paper-plane"></i></button>
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Conversion Rate</div>
+                <div style="font-size:28px;font-weight:800;color:var(--amber)" id="s-conv">0%</div>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-    </div>
-  </div>
-
-</div>
-
-<!-- ── Product Edit/Create Modal ── -->
-<div class="modal-overlay" id="productModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <div class="modal-title" id="modalTitle">Add Product Catalog Item</div>
-      <button class="modal-close" onclick="closeProductModal()"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    
-    <input type="hidden" id="prodId"/>
-    <div class="form-group">
-      <label>Product Category</label>
-      <select id="prodCategory" class="form-control">
-        <option value="tech">Tech & Accessories</option>
-        <option value="fashion">Fashion & Clothing</option>
-        <option value="food">Food & Groceries</option>
-        <option value="home">Home & Kitchen Appliances</option>
-        <option value="beauty">Beauty & Cosmetics</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Brand / Product Type Name</label>
-      <input type="text" id="prodBrand" class="form-control" placeholder="e.g. iPhone 16 Pro, Traditional Senator"/>
-    </div>
-    <div style="display:grid; grid-template-columns: 1.1fr 0.9fr; gap:12px;">
-      <div class="form-group" style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border); padding:8px 12px; border-radius:8px; margin-top:20px;">
-        <input type="checkbox" id="prodInStock" style="width:16px; height:16px; accent-color:var(--primary);" checked onchange="toggleStockCount()"/>
-        <label for="prodInStock" style="margin:0; cursor:pointer;">Available In Stock</label>
-      </div>
-      <div class="form-group">
-        <label>Quantity in Stock</label>
-        <input type="number" id="prodStockCount" class="form-control" placeholder="e.g. 15"/>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- PAGE: Knowledge Base                                               -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="content" id="page-knowledge">
+      <div style="padding:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <div>
+            <h2 style="font-size:18px;font-weight:800;">Product Catalogue</h2>
+            <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">Products the AI uses to draft messages and answer questions</p>
+          </div>
+          <button class="btn btn-primary" onclick="openKBModal()">+ Add Product</button>
+        </div>
+        <div class="kb-grid" id="kb-grid">
+          <div class="empty" style="grid-column:1/-1;padding:60px;"><div class="e-icon">📦</div><p>Loading products...</p></div>
+        </div>
       </div>
     </div>
-    <div class="form-group">
-      <label>Display Image URL (Optional)</label>
-      <input type="text" id="prodImage" class="form-control" placeholder="https://unsplash.com/..."/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- PAGE: Settings                                                      -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="content" id="page-settings">
+      <div style="padding:24px;max-width:600px;">
+        <h2 style="font-size:18px;font-weight:800;margin-bottom:4px;">WhatsApp Setup</h2>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Configure your WhatsApp Business API credentials</p>
+        <div class="card" style="padding:24px;">
+          <div class="field">
+            <label>Phone Number ID</label>
+            <input type="text" id="wa-phone-id" placeholder="From Meta Business Manager"/>
+          </div>
+          <div class="field">
+            <label>Access Token</label>
+            <input type="password" id="wa-token" placeholder="Your permanent access token"/>
+          </div>
+          <div class="field">
+            <label>Webhook Verify Token</label>
+            <input type="text" id="wa-verify" placeholder="e.g. helloagain_token_2026"/>
+          </div>
+          <div class="field">
+            <label>Webhook URL (set this in Meta)</label>
+            <input type="text" id="wa-webhook" readonly style="opacity:0.6;"/>
+          </div>
+          <button class="btn btn-primary" onclick="saveWASettings()">💾 Save Settings</button>
+        </div>
+      </div>
     </div>
-    <div class="form-group">
-      <label>Detailed Pricing & Product Details (Markdown / Content)</label>
-      <textarea id="prodContent" class="form-control" style="min-height:120px;" placeholder="Samsung Galaxy S24 Ultra (NGN 1,800,000). Highly sought-after device with premium camera setup. Nationwide Lagos delivery."></textarea>
+
+  </div><!-- /.main -->
+</div><!-- /.app -->
+
+<!-- ── Add Product Modal ─────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="kb-modal">
+  <div class="modal">
+    <div class="modal-title">Add Product</div>
+    <div class="field-group">
+      <div class="field">
+        <label>Category</label>
+        <select id="kb-cat">
+          <option value="tech">Tech</option>
+          <option value="fashion">Fashion</option>
+          <option value="food">Food</option>
+          <option value="home">Home</option>
+          <option value="beauty">Beauty</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Brand / Product Name</label>
+        <input type="text" id="kb-brand" placeholder="e.g. iPhone 16 Pro"/>
+      </div>
     </div>
-    
-    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:24px;">
-      <button class="btn btn-sec" onclick="closeProductModal()">Cancel</button>
-      <button id="btnSaveProduct" class="btn" onclick="saveProduct()"><i class="fa-solid fa-cloud-arrow-up"></i> Save & Sync AI</button>
+    <div class="field-group">
+      <div class="field">
+        <label>Stock Status</label>
+        <select id="kb-stock">
+          <option value="1">In Stock</option>
+          <option value="0">Out of Stock</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Stock Count</label>
+        <input type="number" id="kb-count" placeholder="e.g. 12"/>
+      </div>
+    </div>
+    <div class="field">
+      <label>Image URL (optional)</label>
+      <input type="url" id="kb-img" placeholder="https://..."/>
+    </div>
+    <div class="field">
+      <label>Product Details (price, specs, description)</label>
+      <textarea id="kb-content" rows="4" placeholder="Price: ₦65,000&#10;Specs: 6.1-inch display, A17 chip&#10;Description: Latest iPhone with titanium finish..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn btn-primary" onclick="saveKBItem()">Add Product</button>
+      <button class="btn btn-ghost" onclick="closeModal('kb-modal')">Cancel</button>
     </div>
   </div>
 </div>
 
-<!-- ── Live Toast System ── -->
-<div id="toast" class="toast">Action successful</div>
+<!-- ── Add Customer Modal ────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="cust-modal">
+  <div class="modal">
+    <div class="modal-title">Add / Find Customer</div>
+    <div class="field">
+      <label>WhatsApp Phone Number</label>
+      <input type="text" id="new-cust-phone" placeholder="e.g. 08012345678"/>
+    </div>
+    <div class="field">
+      <label>Customer Name (optional)</label>
+      <input type="text" id="new-cust-name" placeholder="e.g. Amaka"/>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="createCustomer()">Create</button>
+      <button class="btn btn-ghost" onclick="closeModal('cust-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast Container ───────────────────────────────────────────────────── -->
+<div id="toast-container"></div>
 
 <script>
-// Determine correct subpath router prefix in WSGI dispatcher setups
-const basePrefix = window.location.pathname.startsWith('/admin') ? '/admin' : '';
-document.getElementById('logoutLink').href = basePrefix + '/logout';
+// ── State ─────────────────────────────────────────────────────────────────────
+let selectedSession = null;
+let selectedSessionPrefix = null;
+let simRole = 'user';
+let currentIntentData = null;
+let kbEditId = null;
 
-let currentSession = null;
-let allCustomersData = [];
-let customersVisibleCount = 10;
-
-// Tab Controller
-function switchTab(tabId) {
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-  
-  // Find current trigger
-  const trigger = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
-  if(trigger) trigger.classList.add('active');
-  
-  const contentEl = document.getElementById(`tab-${tabId}`);
-  if(contentEl) contentEl.classList.add('active');
-  
-  if (tabId === 'catalog') {
-    loadCatalog();
-  } else if (tabId === 'whatsapp') {
-    loadWhatsappSettings();
-  } else {
-    loadAll();
-  }
+// ── Page navigation ───────────────────────────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+  const titles = {
+    copilot:'Live Co-Pilot', customers:'Customers',
+    simulator:'WhatsApp Simulator', analytics:'Analytics',
+    knowledge:'Products (KB)', settings:'WhatsApp Setup'
+  };
+  document.getElementById('page-title').textContent = titles[id] || id;
+  if (id === 'copilot')   { loadSignals(); loadCustomerList(); }
+  if (id === 'customers') { loadCustomerList(); }
+  if (id === 'analytics') { loadAnalytics(); loadFunnel(); }
+  if (id === 'knowledge') { loadKB(); }
+  if (id === 'settings')  { loadWASettings(); }
 }
 
-async function loadAll() {
-  loadMetrics();
-  loadCustomers();
-  loadSilent();
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${msg}`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
 }
 
-async function loadMetrics() {
-  const a = await apiFetch('/api/analytics');
-  if(!a) return;
-  
-  const topicsHtml = (a.top_topics && a.top_topics.length)
-    ? ('<div style="font-weight:700;margin-bottom:8px; font-family:\'Outfit\'; font-size:0.85rem;"><i class="fa-solid fa-chart-simple"></i> Trending Buyer Categories</div>' + 
-       a.top_topics.map(t=>`<div style="font-size:0.85rem;color:var(--text-muted); margin-bottom:6px;">${t.topic.toUpperCase()} <span style="float:right;font-weight:800; color:var(--primary);">${t.count} hits</span></div>`).join(''))
-    : '<div class="empty-state">No popular product searches registered.</div>';
-
-  const html = `
-    <div class="metric-card mc-revenue">
-      <div class="metric-label"><i class="fa-solid fa-sack-dollar"></i> Sales Pipeline Value</div>
-      <div class="metric-val">${a.potential_revenue || '₦0'}</div>
-      <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">Revenue from active & follow-up leads.</p>
-    </div>
-    <div class="metric-card" style="background:rgba(16,185,129,0.05); border-color:rgba(16,185,129,0.2);">
-      <div class="metric-label"><i class="fa-solid fa-hand-holding-dollar"></i> Recovered Revenue</div>
-      <div class="metric-val" style="color:#34d399;">${a.recovered_revenue || '₦0'}</div>
-      <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">Revenue won back from recoverable leads.</p>
-    </div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-users"></i> Total Leads</div><div class="metric-val">${a.total}</div></div>
-    <div class="metric-card mc-hot"><div class="metric-label"><i class="fa-solid fa-bolt"></i> Active</div><div class="metric-val">${a.active || 0}</div></div>
-    <div class="metric-card mc-warm"><div class="metric-label"><i class="fa-solid fa-clock-rotate-left"></i> Follow-Up</div><div class="metric-val">${a.follow_up || 0}</div></div>
-    <div class="metric-card" style="border-color:rgba(239,68,68,0.2);"><div class="metric-label"><i class="fa-solid fa-rotate-left"></i> Recoverable</div><div class="metric-val" style="color:#f87171;">${a.recoverable || 0}</div></div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-user"></i> Normal</div><div class="metric-val">${a.normal || 0}</div></div>
-    <div class="metric-card mc-conv"><div class="metric-label"><i class="fa-solid fa-circle-check"></i> Conversions</div><div class="metric-val">${a.converted}</div></div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-clock"></i> Idle >24 Hours</div><div class="metric-val">${a.silent}</div></div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-gauge-high"></i> Avg Engagement</div><div class="metric-val">${a.avg_engagement || 0}<span style="font-size:0.7rem;color:var(--text-muted);">/100</span></div></div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-solid fa-arrow-trend-up"></i> Conversion %</div><div class="metric-val">${a.percent_converted}%</div></div>
-    <div class="metric-card"><div class="metric-label"><i class="fa-brands fa-whatsapp"></i> W/ Phone</div><div class="metric-val">${a.with_phone}</div></div>
-    <div class="metric-card" style="grid-column:span 2;">${topicsHtml}</div>
-  `;
-  document.getElementById('metricsGrid').innerHTML = html;
-}
-
-function getTagHtml(tag, label) {
-  return `<span class="tag-badge tag-${tag}"><i class="fa-solid fa-circle" style="font-size:6px; margin-right:4px;"></i>${label}</span>`;
-}
-
-async function loadCustomers() {
-  const list = await apiFetch('/api/customers');
-  if(!list) return;
-  allCustomersData = list;
-  
-  // Sort LIFO
-  allCustomersData.sort((a, b) => new Date(b.last_seen) - new Date(a.last_seen));
-  
-  customersVisibleCount = 10;
-  renderCustomers();
-}
-
-function renderCustomers() {
-  const tb = document.getElementById('allCustomersTbody');
-  tb.innerHTML = '';
-  
-  const filteredData = filterData(allCustomersData);
-  
-  if(!filteredData.length) { 
-    tb.innerHTML = '<tr><td colspan="7" class="empty-state">No matching lead files found.</td></tr>'; 
-    const btn = document.getElementById('viewMoreBtn');
-    if(btn) btn.style.display = 'none';
-    return; 
-  }
-  
-  const visible = filteredData.slice(0, customersVisibleCount);
-  
-  visible.forEach(c => {
-    const tr = document.createElement('tr');
-    tr.onclick = () => selectCustomer(c.session_short);
-    if(currentSession === c.session_short) {
-      tr.style.background = 'rgba(99,102,241,0.08)';
-      tr.style.borderColor = 'var(--border-active)';
-    }
-    tr.innerHTML = `
-      <td style="font-family:monospace;color:var(--primary);font-weight:700;">${c.session_short}</td>
-      <td>${getTagHtml(c.tag, c.tag_label)}</td>
-      <td style="font-weight:600;">${c.name || '<span style="color:var(--text-muted);font-weight:normal;">Anonymous</span>'}</td>
-      <td style="color:#e2e8f0; font-family:monospace;">${c.phone || '—'}</td>
-      <td style="color:#fb7185; font-weight:600;">${c.topic ? c.topic.toUpperCase() : '—'}</td>
-      <td style="color:#facc15; font-weight:700;">${c.budget || '—'}</td>
-      <td style="width:100px;">
-        <div style="font-weight:700; font-size:0.8rem;">${c.engagement_score || 0}</div>
-        <div class="mini-progress-bg"><div class="mini-progress-fill" style="width:${c.engagement_score || 0}%; background: ${c.engagement_score >= 60 ? 'var(--success)' : (c.engagement_score >= 30 ? 'var(--warning)' : 'var(--danger)')};"></div></div>
-      </td>
-      <td style="font-size:0.8rem;color:var(--text-muted); font-family:monospace;">${c.last_seen}</td>
-    `;
-    tb.appendChild(tr);
-  });
-  
-  const btn = document.getElementById('viewMoreBtn');
-  if(btn) {
-    if(customersVisibleCount >= filteredData.length) {
-      btn.style.display = 'none';
-    } else {
-      btn.style.display = 'inline-block';
-    }
-  }
-}
-
-function filterData(data) {
-  const query = document.getElementById('leadSearchInput').value.toLowerCase().trim();
-  if(!query) return data;
-  return data.filter(c => {
-    return (
-      c.session_short.toLowerCase().includes(query) ||
-      (c.name || '').toLowerCase().includes(query) ||
-      (c.phone || '').toLowerCase().includes(query) ||
-      (c.topic || '').toLowerCase().includes(query) ||
-      (c.budget || '').toLowerCase().includes(query)
-    );
-  });
-}
-
-function filterLeads() {
-  customersVisibleCount = 10;
-  renderCustomers();
-}
-
-function viewMoreCustomers() {
-  customersVisibleCount += 10;
-  renderCustomers();
-}
-
-async function loadSilent() {
-  const list = await apiFetch('/api/silent');
-  if(!list) return;
-  const tb = document.getElementById('silentTbody');
-  tb.innerHTML = '';
-  if(!list.length) { tb.innerHTML = '<tr><td colspan="6" class="empty-state">No idle lead files require follow-ups today. Keep it up!</td></tr>'; return; }
-  list.forEach(c => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td onclick="selectCustomer('${c.session_short}')" style="font-family:monospace;color:var(--primary);font-weight:700;cursor:pointer;">${c.session_short}</td>
-      <td>${getTagHtml(c.tag, c.tag_label)}</td>
-      <td style="font-weight:600;">${c.name || 'Anonymous'}</td>
-      <td style="font-family:monospace;">${c.phone || '—'}</td>
-      <td style="color:var(--warning); font-weight:600;"><i class="fa-solid fa-hourglass-half"></i> Idle (Needs follow-up)</td>
-      <td><button class="btn btn-sec" style="padding:6px 12px;font-size:0.75rem;" onclick="markSent('${c.session_short}', event)"><i class="fa-solid fa-check"></i> Mark Sent</button></td>
-    `;
-    tb.appendChild(tr);
-  });
-}
-
-async function selectCustomer(prefix) {
-  const data = await apiFetch(`/api/customer/${prefix}`);
-  if(!data) return;
-  
-  currentSession = prefix;
-  document.getElementById('detailPanel').style.display = 'block';
-  document.getElementById('lblSession').innerText = prefix;
-  
-  // Highlight active row in main table
-  renderCustomers();
-  
-  // Populate chat
-  const log = document.getElementById('chatLog');
-  log.innerHTML = '';
-  if(!data.messages.length) log.innerHTML = '<div class="empty-state">No active messages</div>';
-  data.messages.forEach(m => {
-    const div = document.createElement('div');
-    const isUser = m.role === 'user';
-    div.className = `msg ${isUser ? 'msg-user' : 'msg-ai'}`;
-    
-    let text = m.content;
-    let imgHtml = '';
-    const imgMatch = text.match(/!\[([^\]]*)\]\(([^)]+)\)/);
-    if(imgMatch) {
-      imgHtml = `<img src="${imgMatch[2]}" alt="${imgMatch[1]}" style="margin-top:10px;border-radius:8px;max-width:100%;display:block;box-shadow:0 4px 12px rgba(0,0,0,0.3);"/>`;
-      text = text.replace(imgMatch[0], '').trim();
-    }
-    
-    div.innerHTML = `${text.replace(/\n/g,'<br>')} ${imgHtml} <span class="msg-time">${m.ts}</span>`;
-    log.appendChild(div);
-  });
-  log.scrollTop = log.scrollHeight;
-
-  // Forms
-  document.getElementById('tagSelect').value = data.customer.tag;
-  document.getElementById('inpName').value = data.customer.name;
-  document.getElementById('inpPhone').value = data.customer.phone;
-  document.getElementById('inpNotes').value = data.customer.notes || '';
-  
-  // Stored customer details for strategies
-  currentCustomerDetails = data.customer;
-  
-  // AI Lead Scoring System
-  calculateLeadScore(data.customer);
-  
-  // Run strategy selection & recommendation
-  updateStrategyRecommendation(data.customer);
-  
-  // Scroll to detail
-  document.getElementById('detailPanel').scrollIntoView({behavior: 'smooth', block: 'start'});
-}
-
-function calculateLeadScore(c) {
-  // Use the live AI-computed engagement score from the backend
-  let score = c.engagement_score || 0;
-  let label = "Normal Lead";
-  
-  if (c.tag === 'active')       { label = "Active — Engaged Now"; }
-  else if (c.tag === 'follow_up')   { label = "Follow-Up — Needs Nudge"; }
-  else if (c.tag === 'recoverable') { label = "Recoverable — Win Back"; }
-  else if (c.tag === 'normal')      { label = "Normal — Browsing"; }
-  
-  score = Math.min(100, score);
-  
-  const circle = document.getElementById('leadScoreCircle');
-  document.getElementById('leadScoreLabel').innerText = label;
-  
-  let targetColor = 'var(--danger)';
-  let glowColor = 'rgba(239,68,68,0.3)';
-  if (score >= 60) {
-    targetColor = 'var(--success)';
-    glowColor = 'var(--success-glow)';
-  } else if (score >= 30) {
-    targetColor = 'var(--warning)';
-    glowColor = 'rgba(245,158,11,0.3)';
-  }
-
-  circle.style.setProperty('--score-color', targetColor);
-  circle.style.boxShadow = `0 0 15px ${glowColor}`;
-  
-  // Animate score counter and ring
-  const span = circle.querySelector('span');
-  let currentVal = 0;
-  const duration = 800; // ms
-  const interval = 20;
-  const steps = duration / interval;
-  const increment = score / steps;
-  
-  clearInterval(circle.dataset.animId);
-  
-  if (score === 0) {
-    span.innerText = "0";
-    circle.style.setProperty('--score', 0);
-    return;
-  }
-  
-  const timer = setInterval(() => {
-    currentVal += increment;
-    if (currentVal >= score) {
-      currentVal = score;
-      clearInterval(timer);
-    }
-    span.innerText = Math.floor(currentVal);
-    circle.style.setProperty('--score', currentVal);
-  }, interval);
-  
-  circle.dataset.animId = timer;
-}
-
-function closeDetail() {
-  document.getElementById('detailPanel').style.display = 'none';
-  currentSession = null;
-  renderCustomers();
-}
-
-function updateWaLink(phone, msg) {
-  const btn = document.getElementById('btnWaLink');
-  const warn = document.getElementById('waWarning');
-  if(phone) {
-    let num = phone.replace(/\D/g,'');
-    if(!num.startsWith('234') && !num.startsWith('+')) {
-      num = '234' + num.replace(/^0/,'');
-    }
-    btn.href = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
-    btn.style.pointerEvents = 'auto'; btn.style.opacity = '1';
-    warn.style.display = 'none';
-  } else {
-    btn.href = '#';
-    btn.style.pointerEvents = 'none'; btn.style.opacity = '0.5';
-    warn.style.display = 'block';
-  }
-}
-
-document.getElementById('txtFollowup').addEventListener('input', (e) => {
-  updateWaLink(document.getElementById('inpPhone').value, e.target.value);
+// ── Modals ────────────────────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
 });
 
-async function saveTag() {
-  if(!currentSession) return;
-  const btn = document.getElementById('btnSaveTag');
-  const orig = btn.innerHTML;
-  const tag = document.getElementById('tagSelect').value;
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmtTime(ts) {
+  if (!ts) return '';
   try {
-    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-    const resp = await apiFetch('/api/tag', { method:'POST', body: JSON.stringify({session_prefix: currentSession, tag}) });
-    if(!resp) {
-      btn.disabled = false; btn.innerHTML = orig; return;
-    }
-    btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
-    showToast("Tag and status updated successfully.");
-    loadAll();
-    setTimeout(() => { btn.disabled = false; btn.innerHTML = orig; }, 1800);
-  } catch (err) {
-    console.error(err);
-    btn.disabled = false; btn.innerHTML = orig;
-    showToast('Failed to update tag');
-  }
+    const d = new Date(ts);
+    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  } catch { return ts.slice(11, 16); }
+}
+function fmtDate(ts) {
+  if (!ts) return '';
+  try { return new Date(ts).toLocaleDateString('en-GB', { day:'2-digit', month:'short' }); }
+  catch { return ts.slice(0,10); }
+}
+function healthColor(score) {
+  if (score >= 70) return 'var(--green)';
+  if (score >= 40) return 'var(--amber)';
+  return 'var(--red)';
+}
+function avatarInitials(name) {
+  if (!name) return '?';
+  return name.trim().split(/\s+/).slice(0,2).map(w => w[0].toUpperCase()).join('');
+}
+function avatarColor(str) {
+  const colors = ['#6c63ff','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316'];
+  let h = 0;
+  for (let c of (str||'x')) h = ((h << 5) - h) + c.charCodeAt(0);
+  return colors[Math.abs(h) % colors.length];
 }
 
-async function saveInfo() {
-  if(!currentSession) return;
-  const btn = document.getElementById('btnSaveInfo');
-  const orig = btn.innerHTML;
-  const name = document.getElementById('inpName').value;
-  const phone = document.getElementById('inpPhone').value;
-  const notes = document.getElementById('inpNotes').value;
-  try {
-    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-    const resp = await apiFetch('/api/save', { method:'POST', body: JSON.stringify({session_prefix: currentSession, name, phone, notes}) });
-    if(!resp) { btn.disabled = false; btn.innerHTML = orig; return; }
-    btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
-    showToast("Lead file updated successfully.");
-    updateWaLink(phone, document.getElementById('txtFollowup').value);
-    loadAll();
-    setTimeout(() => { btn.disabled = false; btn.innerHTML = orig; }, 1800);
-  } catch (err) {
-    console.error(err);
-    btn.disabled = false; btn.innerHTML = orig;
-    showToast('Failed to save profile');
-  }
-}
+// ── Load Signals ──────────────────────────────────────────────────────────────
+async function loadSignals() {
+  const res  = await fetch('/api/copilot/signals');
+  const data = await res.json();
+  const list = document.getElementById('signal-list');
 
-async function runAnalysis() {
-  if (!currentSession) { showToast('No customer selected.'); return; }
-  const btn = document.getElementById('btnRunAnalysis');
-  const orig = btn.innerHTML;
-  try {
-    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...';
-    const resp = await apiFetch(`/api/analyze/${currentSession}`, { method: 'POST' });
-    if (!resp || !resp.analysis) {
-      showToast('Analysis failed or returned no data.');
-      btn.disabled = false; btn.innerHTML = orig; return;
-    }
+  document.getElementById('nav-signals-count').textContent = data.length;
 
-    const a = resp.analysis;
-    // Display summary
-    const summaryEl = document.getElementById('aiAnalysisSummary');
-    summaryEl.style.display = 'block';
-    summaryEl.innerHTML = `<strong style="color:var(--text-main);">Intent:</strong> ${a.get('intent_summary') || a.intent_summary || a.intent || 'N/A'}<br/><strong style="color:var(--text-main);">Next action:</strong> ${a.next_action || '—'}<br/><strong style="color:var(--text-main);">Confidence:</strong> ${a.confidence || '—'}`;
-
-    // Update UI scores and tag
-    if (!currentCustomerDetails) currentCustomerDetails = {};
-    currentCustomerDetails.engagement_score = a.engagement_score || a.get?.('engagement_score') || currentCustomerDetails.engagement_score || 0;
-    currentCustomerDetails.tag = a.tag || a.get?.('tag') || currentCustomerDetails.tag || 'normal';
-
-    // Re-render score and strategy
-    calculateLeadScore(currentCustomerDetails);
-    updateStrategyRecommendation(currentCustomerDetails);
-
-    // Pre-fill follow-up suggestion area with next_action if empty
-    const txt = document.getElementById('txtFollowup');
-    if (txt && (!txt.value || txt.value.trim().length < 5)) {
-      txt.value = a.next_action || '';
-      updateWaLink(document.getElementById('inpPhone').value, txt.value);
-    }
-
-    showToast('AI analysis complete.');
-  } catch (err) {
-    console.error(err);
-    showToast('AI analysis failed.');
-  } finally {
-    btn.disabled = false; btn.innerHTML = orig;
-  }
-}
-
-async function generateFollowupFromAnalysis() {
-  if (!currentSession) { showToast('No customer selected.'); return; }
-  const btn = document.getElementById('btnGenFollowup');
-  const orig = btn.innerHTML;
-  try {
-    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
-    const resp = await apiFetch('/api/generate-followup', { method: 'POST', body: JSON.stringify({ session_prefix: currentSession }) });
-    if (!resp || !resp.message) { showToast('Failed to generate follow-up.'); return; }
-    const txt = document.getElementById('txtFollowup');
-    txt.value = resp.message;
-    updateWaLink(document.getElementById('inpPhone').value, resp.message);
-    showToast('Follow-up drafted. Edit and send when ready.');
-  } catch (err) {
-    console.error(err);
-    showToast('Failed to generate follow-up.');
-  } finally {
-    btn.disabled = false; btn.innerHTML = orig;
-  }
-}
-
-async function markSent(prefix, e) {
-  e.stopPropagation();
-  const resp = await apiFetch('/api/mark-sent', { method:'POST', body: JSON.stringify({session_prefix: prefix}) });
-  if(!resp) return;
-  showToast("Outreach logged as sent.");
-  loadAll();
-}
-
-// ── Tab 2: Catalog Memory Controls ──
-async function loadCatalog() {
-  const items = await apiFetch('/api/kb');
-  if(!items) return;
-  const grid = document.getElementById('catalogGrid');
-  grid.innerHTML = '';
-  
-  if(!items.length) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column: span 3;">No product lines have been configured yet. Click "Add Product" to populate your AI catalog.</div>';
+  if (!data.length) {
+    list.innerHTML = `<div class="empty"><div class="e-icon">📡</div><h3>All Clear!</h3><p>No unactioned signals right now</p></div>`;
     return;
   }
-  
-  items.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'catalog-card';
-    
-    const hasImg = p.image_url ? true : false;
-    const bgImgStyle = hasImg ? `background-image: url('${p.image_url}')` : `background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)`;
-    
-    const stockBadge = p.in_stock 
-      ? `<span class="catalog-card-badge ccb-instock"><i class="fa-solid fa-circle-check"></i> In Stock (${p.stock_count || '∞'})</span>`
-      : `<span class="catalog-card-badge ccb-oos"><i class="fa-solid fa-circle-xmark"></i> Out of Stock</span>`;
-      
-    card.innerHTML = `
-      <div class="catalog-card-image" style="${bgImgStyle}">
-        ${stockBadge}
+
+  list.innerHTML = data.map(s => `
+    <div class="signal-item" onclick="selectCustomerBySession('${s.session_id}', this)">
+      <div class="signal-dot ${s.severity === 'high' ? 'sig-high' : s.severity === 'medium' ? 'sig-medium' : 'sig-low'}"></div>
+      <div class="signal-content">
+        <div class="signal-customer">${s.name || s.session_id.slice(0,12)}</div>
+        <div class="signal-msg">${s.alert_message}</div>
+        <div class="signal-time">${fmtDate(s.detected_at)} ${fmtTime(s.detected_at)}</div>
       </div>
-      <div class="catalog-card-cat">${p.category}</div>
-      <div class="catalog-card-brand">${p.brand}</div>
-      <div class="catalog-card-content">${p.content.replace(/\n/g, '<br>')}</div>
-      <div class="catalog-card-footer">
-        <button class="btn btn-sec" style="padding:6px 12px; font-size:0.75rem;" onclick="openProductModal(${p.id}, '${p.category}', '${p.brand.replace(/'/g, "\\'")}', ${p.in_stock}, ${p.stock_count || 'null'}, '${p.image_url || ''}', '${p.content.replace(/\n/g, '\\n').replace(/'/g, "\\'")}')"><i class="fa-solid fa-pen"></i> Edit</button>
-        <button class="btn btn-danger" style="padding:6px 12px; font-size:0.75rem;" onclick="deleteProduct(${p.id})"><i class="fa-solid fa-trash-can"></i> Delete</button>
+      <span class="signal-badge badge-${s.severity}">${s.severity}</span>
+    </div>
+  `).join('');
+}
+
+// ── Load Customer List ────────────────────────────────────────────────────────
+async function loadCustomerList() {
+  const [custRes, hRes] = await Promise.all([
+    fetch('/api/customers'),
+    fetch('/api/copilot/health-scores')
+  ]);
+  const customers = await custRes.json();
+  const healthMap = {};
+  (await hRes.json()).forEach(h => { healthMap[h.session_id] = h; });
+
+  document.getElementById('cust-count').textContent = `${customers.length} customers`;
+
+  const wrap = document.getElementById('customer-list-wrap');
+  if (!customers.length) {
+    wrap.innerHTML = `<div class="empty"><div class="e-icon">👥</div><h3>No customers yet</h3><p>Use the WA Simulator to log conversations</p></div>`;
+    return;
+  }
+
+  wrap.innerHTML = customers.map(c => {
+    const h = healthMap[c.session_id];
+    const score = h ? h.health_score : 0;
+    const stage = h ? h.stage : 'new_lead';
+    const name = c.name || c.session_short || c.session_id.slice(0,8);
+    const col = avatarColor(name);
+    return `
+      <div class="customer-item" onclick="selectCustomerBySession('${c.session_id}', this)">
+        <div class="cust-avatar" style="background:${col}">${avatarInitials(name)}</div>
+        <div class="cust-info">
+          <div class="cust-name">${name}</div>
+          <div class="cust-sub">${c.topic || 'No topic'} · ${fmtDate(c.last_seen)}</div>
+        </div>
+        <div class="cust-right">
+          <div class="health-badge" style="background:${healthColor(score)}22;color:${healthColor(score)}">❤ ${score}</div>
+          <div class="stage-tag">${stage.replace('_',' ')}</div>
+        </div>
       </div>
     `;
-    grid.appendChild(card);
-  });
+  }).join('');
 }
 
-function toggleStockCount() {
-  const stockCheck = document.getElementById('prodInStock').checked;
-  const countInp = document.getElementById('prodStockCount');
-  if(!stockCheck) {
-    countInp.value = 0;
-    countInp.disabled = true;
+// ── Select Customer ───────────────────────────────────────────────────────────
+async function selectCustomerBySession(session_id, el) {
+  selectedSession = session_id;
+  selectedSessionPrefix = session_id.slice(0,8);
+
+  document.querySelectorAll('.signal-item, .customer-item').forEach(i => i.classList.remove('selected'));
+  if (el) el.classList.add('selected');
+
+  // Load conversation
+  const res = await fetch(`/api/customer/${session_id.slice(0,8)}`);
+  if (!res.ok) return;
+  const data = await res.json();
+  const c = data.customer;
+
+  // Also fetch stage + health
+  const stageRes = await fetch(`/api/copilot/customer/${session_id.slice(0,8)}/stage`);
+  const stageData = stageRes.ok ? await stageRes.json() : {};
+
+  renderConvoView(c, data.messages, stageData);
+  renderActionPanel(null);  // clear old actions while loading
+}
+
+function renderConvoView(c, messages, stageData) {
+  const name = c.name || c.session_id.slice(0,8);
+  const score = stageData.health_score || 0;
+  const stage = (stageData.stage || 'new_lead').replace('_', ' ');
+  const col = avatarColor(name);
+
+  document.getElementById('convo-placeholder').style.display = 'none';
+  const convoView = document.getElementById('convo-view');
+  convoView.style.display = 'flex';
+
+  document.getElementById('cv-avatar').textContent = avatarInitials(name);
+  document.getElementById('cv-avatar').style.background = col;
+  document.getElementById('cv-name').textContent = name;
+  document.getElementById('cv-sub').textContent = `${stage} · Health: ${score}`;
+  document.getElementById('cv-stage-badge').textContent = stage;
+
+  const msgsEl = document.getElementById('cv-messages');
+  if (!messages || !messages.length) {
+    msgsEl.innerHTML = `<div class="empty"><div class="e-icon">💬</div><p>No messages yet</p></div>`;
+    return;
+  }
+
+  msgsEl.innerHTML = messages.map(m => {
+    const isCustomer = m.role === 'user';
+    return `
+      <div style="display:flex;flex-direction:column;align-items:${isCustomer ? 'flex-start' : 'flex-end'}">
+        <div class="msg-sender">${isCustomer ? '👤 Customer' : '🧑‍💼 Seller'}</div>
+        <div class="msg-bubble ${isCustomer ? 'msg-customer' : 'msg-seller'}">${m.content}</div>
+        <div class="msg-time">${fmtTime(m.ts)}</div>
+      </div>
+    `;
+  }).join('');
+
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+
+function renderActionPanel(intentData, actionList) {
+  const intentWrap = document.getElementById('intent-box-wrap');
+  const actionsWrap = document.getElementById('action-cards-wrap');
+
+  if (intentData) {
+    currentIntentData = intentData;
+    const conf = intentData.confidence || 0;
+    intentWrap.innerHTML = `
+      <div class="intent-box">
+        <div class="intent-label">🧠 AI Intent Analysis</div>
+        <div class="intent-value">${(intentData.intent || 'Unknown').replace(/_/g, ' ')}</div>
+        <div class="intent-stage" style="margin-bottom:8px;">${intentData.sales_stage || ''}</div>
+        <div class="confidence-bar">
+          <div class="confidence-fill" style="width:${conf}%"></div>
+        </div>
+        <div class="confidence-label">Confidence: ${conf}%</div>
+      </div>
+    `;
   } else {
-    countInp.disabled = false;
+    intentWrap.innerHTML = '';
   }
-}
 
-function openProductModal(id = null, category = 'tech', brand = '', inStock = true, stockCount = null, imageUrl = '', content = '') {
-  document.getElementById('productModal').style.display = 'flex';
-  
-  if (id) {
-    document.getElementById('modalTitle').innerText = 'Modify Product Catalog Item';
-    document.getElementById('prodId').value = id;
-    document.getElementById('prodCategory').value = category;
-    document.getElementById('prodBrand').value = brand;
-    document.getElementById('prodInStock').checked = inStock;
-    document.getElementById('prodStockCount').value = stockCount || '';
-    document.getElementById('prodImage').value = imageUrl;
-    document.getElementById('prodContent').value = content;
-  } else {
-    document.getElementById('modalTitle').innerText = 'Create Product Catalog Item';
-    document.getElementById('prodId').value = '';
-    document.getElementById('prodCategory').value = 'tech';
-    document.getElementById('prodBrand').value = '';
-    document.getElementById('prodInStock').checked = true;
-    document.getElementById('prodStockCount').value = '';
-    document.getElementById('prodImage').value = '';
-    document.getElementById('prodContent').value = '';
-  }
-  toggleStockCount();
-}
-
-function closeProductModal() {
-  document.getElementById('productModal').style.display = 'none';
-}
-
-async function saveProduct() {
-  const btn = document.getElementById('btnSaveProduct');
-  const orig = btn ? btn.innerHTML : null;
-  const id = document.getElementById('prodId').value;
-  const category = document.getElementById('prodCategory').value;
-  const brand = document.getElementById('prodBrand').value;
-  const in_stock = document.getElementById('prodInStock').checked;
-  const stock_count = document.getElementById('prodStockCount').value;
-  const image_url = document.getElementById('prodImage').value;
-  const content = document.getElementById('prodContent').value;
-  
-  if(!category || !brand || !content) {
-    showToast("Please fill in Category, Brand Name and Product Details.");
+  const actions = actionList || [];
+  if (!actions.length && !selectedSession) {
+    actionsWrap.innerHTML = `<div class="empty" style="padding:30px 20px;"><div class="e-icon">🎯</div><h3>No Customer Selected</h3><p>Select a customer to see recommended actions</p></div>`;
     return;
   }
-  
-  const payload = { category, brand, in_stock, stock_count, image_url, content };
-  
+
+  if (!actions.length) {
+    actionsWrap.innerHTML = `
+      <div class="action-cards">
+        <button class="btn btn-primary" style="width:100%" onclick="runAIAnalysis()">🧠 Analyze Conversation & Get Insights</button>
+      </div>
+    `;
+    return;
+  }
+
+  actionsWrap.innerHTML = `<div class="action-cards">` + actions.map(a => `
+    <div class="action-card" style="--action-color:${a.color}; align-items:flex-start;" onclick="generateDraft('${a.id}')">
+      <div class="action-icon" style="background:${a.color}22;">${a.icon}</div>
+      <div class="action-text">
+        <div class="action-label">${a.label}</div>
+        <div class="action-desc" style="margin-bottom:6px;">${a.description}</div>
+        ${intentData && intentData.reasoning ? `<div style="font-size:11px;color:${a.color};background:${a.color}11;padding:6px 8px;border-radius:6px;border:1px solid ${a.color}22;"><strong>Why?</strong> ${intentData.reasoning}</div>` : ''}
+      </div>
+      <div class="action-arrow" style="margin-top:10px;">→</div>
+    </div>
+  `).join('') + `</div>`;
+}
+
+// ── AI Analysis ───────────────────────────────────────────────────────────────
+async function runAIAnalysis() {
+  if (!selectedSession) return toast('Select a customer first', 'error');
+  const btn = document.getElementById('btn-analyze');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Analyzing...';
+
   try {
-    if(btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Syncing...'; }
-    let resp;
-    if(id) {
-      resp = await apiFetch(`/api/kb/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
-    } else {
-      resp = await apiFetch('/api/kb', { method: 'POST', body: JSON.stringify(payload) });
-    }
-    if(!resp) { if(btn) { btn.disabled = false; btn.innerHTML = orig; } return; }
-    if(btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Synced';
-    showToast(id ? "✅ Success! Product updated & AI memory synchronized." : "🎉 Success! Product added & AI memory synchronized.");
-    closeProductModal();
-    loadCatalog();
-    setTimeout(() => { if(btn) { btn.disabled = false; btn.innerHTML = orig; } }, 1600);
-  } catch (err) {
-    console.error(err);
-    if(btn) { btn.disabled = false; btn.innerHTML = orig; }
-    showToast('Failed to save product');
-  }
-}
-
-async function deleteProduct(id) {
-  if(!confirm("Are you sure you want to delete this product? This will erase it from the AI's semantic knowledge base instantly.")) return;
-  const resp = await apiFetch(`/api/kb/${id}`, { method: 'DELETE' });
-  if(!resp) return;
-  showToast("🗑️ Success! Product successfully purged from AI memory catalog.");
-  loadCatalog();
-}
-
-// ── Tab 3: WhatsApp Settings Integration ──
-async function loadWhatsappSettings() {
-  const data = await apiFetch('/api/whatsapp-settings');
-  if(!data) return;
-  
-  document.getElementById('settingWebhook').value = data.webhook_url;
-  document.getElementById('settingVerifyToken').value = data.verify_token;
-  document.getElementById('settingPhoneId').value = data.phone_number_id;
-  document.getElementById('settingAccessToken').value = data.access_token;
-  document.getElementById('settingLiveMode').checked = data.live_mode === "1";
-}
-
-async function saveWhatsappSettings() {
-  const verify_token = document.getElementById('settingVerifyToken').value;
-  const phone_number_id = document.getElementById('settingPhoneId').value;
-  const access_token = document.getElementById('settingAccessToken').value;
-  const live_mode = document.getElementById('settingLiveMode').checked ? "1" : "0";
-  
-  const resp = await apiFetch('/api/whatsapp-settings', {
-    method: 'POST',
-    body: JSON.stringify({ verify_token, phone_number_id, access_token, live_mode })
-  });
-  
-  if(!resp) return;
-  showToast("WhatsApp Cloud integration credentials saved.");
-}
-
-// ── Webhook Chat Simulator ──
-async function sendSimulatedWebhook() {
-  const phoneInput = document.getElementById('simPhoneInput');
-  const msgInput = document.getElementById('simMsgInput');
-  const phone = phoneInput.value.trim();
-  const message = msgInput.value.trim();
-  
-  if(!phone || !message) {
-    showToast("Type a test phone number and a message to send.");
-    return;
-  }
-  
-  const body = document.getElementById('simChatBody');
-  
-  // Append user bubble instantly
-  const userDiv = document.createElement('div');
-  userDiv.className = 'sim-msg sim-msg-user';
-  userDiv.innerText = message;
-  body.appendChild(userDiv);
-  body.scrollTop = body.scrollHeight;
-  
-  msgInput.value = '';
-  msgInput.disabled = true;
-  
-  // Fetch AI Response webhook simulation
-  const data = await apiFetch('/api/whatsapp/simulate', {
-    method: 'POST',
-    body: JSON.stringify({ phone, message })
-  });
-  
-  msgInput.disabled = false;
-  msgInput.focus();
-  
-  if(!data) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'sim-msg sim-msg-ai';
-    errorDiv.style.background = 'rgba(239, 68, 68, 0.2)';
-    errorDiv.innerText = "Error contacting AI webhook simulator. Double check model config.";
-    body.appendChild(errorDiv);
-    return;
-  }
-  
-  // Append AI bubble
-  const aiDiv = document.createElement('div');
-  aiDiv.className = 'sim-msg sim-msg-ai';
-  aiDiv.innerHTML = data.reply.replace(/\n/g, '<br>');
-  body.appendChild(aiDiv);
-  body.scrollTop = body.scrollHeight;
-  
-  showToast(`Simulated message processed for session wa-${phone}`);
-}
-
-// Helper: robust fetch wrapper that handles subpath redirects and formats
-async function apiFetch(path, options) {
-  try {
-    const fullPath = path.startsWith('/api') ? basePrefix + path : path;
-    const res = await fetch(fullPath, Object.assign({
-      credentials: 'same-origin',
-      headers: {'Content-Type':'application/json'}
-    }, options));
-    
-    if (!res.ok) {
-      if (res.status === 401 || res.status === 403) {
-        document.getElementById('metricsGrid').innerHTML = '<div class="empty-state">Not authenticated — <a href="' + basePrefix + '/login" class="btn">Sign in</a></div>';
-        return null;
-      }
-      const txt = await res.text();
-      console.error('API error', fullPath, res.status, txt);
-      showToast('Backend Server Error: Check Python environment');
-      return null;
-    }
-    
-    const ct = res.headers.get('content-type') || '';
-    if (!ct.includes('application/json')) {
-      // Redirect triggers if session expires or logs out
-      window.location.href = basePrefix + '/login';
-      return null;
-    }
-    
-    return await res.json();
-  } catch (err) {
-    console.error('Fetch failed', path, err);
-    showToast('Network Connection Error');
-    return null;
-  }
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.innerText = msg;
-  t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 4000);
-}
-
-// ── Follow-up Strategy & Custom Templates logic ──
-const defaultTemplates = {
-  pulse: "Hi {name}! It's HelloAgain AI. You were checking out {topic} earlier. Still interested? We'd love to help.",
-  discount: "Hey {name}! I noticed you were looking at {topic}. I'd love to offer you a special discount of 10% if you're ready to wrap this up today!",
-  negotiate: "Hi {name}! Let's make this work for you. I'm open to discussing the price/budget for {topic} — what did you have in mind?",
-  testimonial: "Hi {name}! Don't just take our word for it. Here is what one of our happy customers said about {topic}: \"Amazing quality and super fast delivery!\" Let me know if you want to try it out.",
-  reengage: "Hey {name}! It's been a while. We just restocked {topic} and got some new collections in. Would you like to check them out?"
-};
-
-let customTemplates = {};
-let activeStrategy = 'pulse';
-let currentCustomerDetails = null; // Stored customer object
-
-function loadCustomTemplates() {
-  const stored = localStorage.getItem('helloagain_custom_templates');
-  if (stored) {
-    try {
-      customTemplates = JSON.parse(stored);
-    } catch(e) {
-      customTemplates = {};
-    }
-  }
-  
-  // Fill missing keys with default templates
-  for (const key in defaultTemplates) {
-    if (!customTemplates[key]) {
-      customTemplates[key] = defaultTemplates[key];
-    }
-    const inputEl = document.getElementById(`temp-${key}`);
-    if (inputEl) {
-      inputEl.value = customTemplates[key];
-    }
-  }
-}
-
-function saveCustomTemplates() {
-  for (const key in defaultTemplates) {
-    const inputEl = document.getElementById(`temp-${key}`);
-    if (inputEl) {
-      customTemplates[key] = inputEl.value;
-    }
-  }
-  localStorage.setItem('helloagain_custom_templates', JSON.stringify(customTemplates));
-  
-  // Re-apply strategy to text field with updated template
-  if (currentCustomerDetails) {
-    applyStrategy(activeStrategy);
-  }
-}
-
-function toggleTemplateCustomizer() {
-  const el = document.getElementById('templateCustomizer');
-  if (el) {
-    el.classList.toggle('open');
-  }
-}
-
-function renderTemplate(template, customer) {
-  if (!template) return '';
-  const name = customer.name || 'there';
-  const topic = customer.topic || 'your inquiry';
-  const budget = customer.budget || '';
-  
-  return template
-    .replace(/{name}/g, name)
-    .replace(/{topic}/g, topic)
-    .replace(/{budget}/g, budget);
-}
-
-function selectStrategy(strategyId) {
-  activeStrategy = strategyId;
-  
-  // Update UI active buttons
-  document.querySelectorAll('.strategy-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  const activeBtn = document.getElementById(`strat-${strategyId}`);
-  if (activeBtn) {
-    activeBtn.classList.add('active');
-  }
-  
-  applyStrategy(strategyId);
-}
-
-function applyStrategy(strategyId) {
-  if (!currentCustomerDetails) return;
-  
-  const template = customTemplates[strategyId] || defaultTemplates[strategyId];
-  const rendered = renderTemplate(template, currentCustomerDetails);
-  
-  const textarea = document.getElementById('txtFollowup');
-  if (textarea) {
-    textarea.value = rendered;
-    updateWaLink(currentCustomerDetails.phone, rendered);
-  }
-}
-
-async function logSelectedCustomerOutreach() {
-  if (!currentSession) {
-    showToast("No active customer selected.");
-    return;
-  }
-  const btn = document.getElementById('btnLogSent');
-  const orig = btn.innerHTML;
-  try {
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging...';
-    const resp = await apiFetch('/api/mark-sent', {
+    const res = await fetch('/api/copilot/recommend-action', {
       method: 'POST',
-      body: JSON.stringify({ session_prefix: currentSession })
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ session_prefix: selectedSession.slice(0,8) })
     });
-    if (!resp) {
-      btn.disabled = false;
-      btn.innerHTML = orig;
-      return;
+    const data = await res.json();
+    if (data.ok) {
+      renderActionPanel(data.intent_analysis, data.actions);
+      toast('AI analysis complete ✨');
+    } else {
+      toast(data.error || 'Analysis failed', 'error');
     }
-    btn.innerHTML = '<i class="fa-solid fa-check"></i> Logged';
-    showToast("Outreach logged as sent!");
-    
-    // Refresh details for current customer to update followup_sent state
-    const data = await apiFetch(`/api/customer/${currentSession}`);
-    if (data) {
-      currentCustomerDetails = data.customer;
-      // Re-run sequencing recommendation
-      updateStrategyRecommendation(data.customer);
-    }
-    
-    loadAll();
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.innerHTML = orig;
-    }, 1800);
-  } catch (err) {
-    console.error(err);
+  } catch(e) {
+    toast('Network error', 'error');
+  } finally {
     btn.disabled = false;
-    btn.innerHTML = orig;
-    showToast('Failed to log outreach');
+    btn.textContent = '🧠 Analyze';
   }
 }
 
-function updateStrategyRecommendation(customer) {
-  // Clear recommended flags
-  document.querySelectorAll('.strategy-btn').forEach(btn => {
-    btn.classList.remove('recommended');
+// ── Generate Draft ────────────────────────────────────────────────────────────
+async function generateDraft(actionType) {
+  if (!selectedSession) return toast('Select a customer first', 'error');
+
+  const cards = document.querySelectorAll('.action-card');
+  cards.forEach(c => c.classList.add('loading'));
+
+  const placeholder = document.getElementById('draft-placeholder');
+  const content = document.getElementById('draft-content');
+  placeholder.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner" style="width:20px;height:20px;border-width:2px;"></span><p style="margin-top:10px;font-size:12px;color:var(--text-muted);">AI is crafting your message...</p></div>';
+  placeholder.style.display = 'block';
+  content.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/copilot/draft-message', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ session_prefix: selectedSession.slice(0,8), action_type: actionType })
+    });
+    const data = await res.json();
+
+    if (data.ok && data.draft) {
+      document.getElementById('draft-textarea').value = data.draft;
+      placeholder.style.display = 'none';
+      content.style.display = 'block';
+      toast('Draft ready! Review and copy to WhatsApp ✨');
+    } else {
+      placeholder.innerHTML = `<div class="dp-icon">⚠️</div><p>${data.error || 'Draft failed — write manually'}</p>`;
+      toast(data.error || 'Draft generation failed', 'error');
+    }
+  } catch(e) {
+    placeholder.innerHTML = '<div class="dp-icon">⚠️</div><p>Network error — please try again</p>';
+    toast('Network error', 'error');
+  } finally {
+    cards.forEach(c => c.classList.remove('loading'));
+  }
+}
+
+function copyDraft() {
+  const text = document.getElementById('draft-textarea').value;
+  navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard! Paste in WhatsApp 📋'));
+}
+function clearDraft() {
+  document.getElementById('draft-placeholder').style.display = 'block';
+  document.getElementById('draft-placeholder').innerHTML = '<div class="dp-icon">✨</div><p>Click an action button above to generate a personalized draft message</p>';
+  document.getElementById('draft-content').style.display = 'none';
+}
+
+// ── WA Simulator ──────────────────────────────────────────────────────────────
+function setRole(role, btn) {
+  simRole = role;
+  document.querySelectorAll('.wa-role-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function simSendMessage() {
+  const session_id = document.getElementById('sim-session').value.trim();
+  const name = document.getElementById('sim-name').value.trim();
+  const msg = document.getElementById('sim-input').value.trim();
+  if (!session_id || !msg) return toast('Session ID and message required', 'error');
+
+  const btn = document.getElementById('sim-send-btn');
+  btn.disabled = true;
+
+  // Show message in thread
+  const thread = document.getElementById('sim-messages');
+  thread.innerHTML += `
+    <div class="wa-msg ${simRole === 'user' ? 'wa-msg-customer' : 'wa-msg-seller'}" style="align-self:${simRole === 'user' ? 'flex-start' : 'flex-end'}">
+      <div>${msg}</div>
+      <div class="wa-msg-time">${new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} · ${simRole === 'user' ? '👤 Customer' : '🧑‍💼 Seller'}</div>
+    </div>`;
+  thread.scrollTop = thread.scrollHeight;
+  document.getElementById('sim-input').value = '';
+
+  // Send to backend
+  try {
+    const payload = { session_id, message: msg, role: simRole };
+    if (name && simRole === 'user') payload.name = name;
+
+    const res = await fetch('/api/copilot/log-message', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    document.getElementById('sim-wa-name').textContent = name || session_id;
+
+    if (simRole === 'user' && data.signals && data.signals.length) {
+      renderSimSignalResult(data);
+    }
+  } catch(e) {
+    toast('Failed to log message', 'error');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('sim-input').focus();
+  }
+}
+
+document.getElementById('sim-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); simSendMessage(); }
+});
+
+function renderSimSignalResult(data) {
+  const wrap = document.getElementById('sim-signal-result');
+  const signals = data.signals || [];
+  const intent = data.intent_analysis;
+  const actions = data.actions || [];
+
+  wrap.innerHTML = `
+    <div class="card" style="margin-top:16px;padding:16px;">
+      <div style="font-weight:700;font-size:14px;margin-bottom:12px;">🎯 Co-Pilot Analysis</div>
+      <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+        <div style="background:rgba(108,99,255,0.12);border:1px solid rgba(108,99,255,0.25);border-radius:8px;padding:8px 14px;">
+          <div style="font-size:10px;color:var(--accent);font-weight:600;">STAGE</div>
+          <div style="font-size:14px;font-weight:700;">${(data.stage||'new_lead').replace('_',' ')}</div>
+        </div>
+        <div style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:8px 14px;">
+          <div style="font-size:10px;color:var(--green);font-weight:600;">HEALTH</div>
+          <div style="font-size:14px;font-weight:700;">❤ ${data.health_score || 0}</div>
+        </div>
+      </div>
+      ${signals.map(s => `
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+          <div style="font-size:12px;font-weight:600;margin-bottom:2px;">${s.alert_message}</div>
+          <div style="font-size:11px;color:var(--text-dim);">Signal: ${s.signal_type} · ${s.severity} priority ${s.ai_needed ? '· 🧠 AI analyzed' : ''}</div>
+        </div>
+      `).join('')}
+      ${intent ? `
+        <div style="background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.25);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+          <div style="font-size:10px;color:var(--accent);font-weight:600;margin-bottom:4px;">AI INTENT</div>
+          <div style="font-size:13px;font-weight:700;">${(intent.intent||'').replace('_',' ')} · ${intent.confidence}% confidence</div>
+          <div style="font-size:11px;color:var(--text-muted);">${intent.sales_stage||''}</div>
+        </div>
+      ` : ''}
+      ${actions.length ? `
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;font-weight:600;">RECOMMENDED ACTIONS:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
+          ${actions.map(a => `<span style="background:${a.color}22;color:${a.color};border:1px solid ${a.color}44;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;">${a.icon} ${a.label}</span>`).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// ── Scan Silence ──────────────────────────────────────────────────────────────
+async function scanSilence() {
+  const res = await fetch('/api/copilot/scan-silence', { method: 'POST' });
+  const data = await res.json();
+  toast(`Scanned ${data.scanned} customers. Found ${data.silent} silent leads.`);
+  loadSignals();
+}
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+async function loadAnalytics() {
+  const res = await fetch('/api/analytics');
+  const d = await res.json();
+  document.getElementById('s-total').textContent    = d.total || 0;
+  document.getElementById('s-active').textContent   = d.active || 0;
+  document.getElementById('s-followup').textContent  = d.follow_up || 0;
+  document.getElementById('s-recover').textContent  = d.recoverable || 0;
+  document.getElementById('s-potential').textContent = d.potential_revenue || '₦0';
+  document.getElementById('s-avg-score').textContent = d.avg_engagement || 0;
+  document.getElementById('s-conv').textContent      = (d.percent_converted || 0) + '%';
+}
+
+async function loadFunnel() {
+  const res = await fetch('/api/copilot/stages');
+  const data = await res.json();
+  const wrap = document.getElementById('funnel-wrap');
+  const max = Math.max(...Object.values(data).map(s => s.count), 1);
+  wrap.innerHTML = Object.values(data).map(s => `
+    <div class="funnel-row">
+      <div class="funnel-label">${s.label}</div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width:${(s.count/max)*100}%;background:${s.color}"></div>
+      </div>
+      <div class="funnel-count" style="color:${s.color}">${s.count}</div>
+    </div>
+  `).join('');
+}
+
+// ── KB ────────────────────────────────────────────────────────────────────────
+async function loadKB() {
+  const res = await fetch('/api/kb');
+  const items = await res.json();
+  const grid = document.getElementById('kb-grid');
+  const catIcons = {tech:'💻',fashion:'👗',food:'🍲',home:'🏠',beauty:'💄'};
+  if (!items.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:60px;"><div class="e-icon">📦</div><p>No products yet. Add your first product!</p></div>`;
+    return;
+  }
+  grid.innerHTML = items.map(i => `
+    <div class="kb-card">
+      ${i.image_url
+        ? `<img src="${i.image_url}" class="kb-img" onerror="this.style.display='none'">`
+        : `<div class="kb-img">${catIcons[i.category]||'📦'}</div>`}
+      <div class="kb-body">
+        <div class="kb-category">${i.category}</div>
+        <div class="kb-brand">${i.brand}</div>
+        <div class="kb-content">${i.content}</div>
+      </div>
+      <div class="kb-footer">
+        <span class="stock-badge ${i.in_stock ? 'in-stock' : 'out-stock'}">${i.in_stock ? '✓ In Stock' : '✗ Out of Stock'}</span>
+        ${i.stock_count != null ? `<span style="font-size:11px;color:var(--text-dim);">${i.stock_count} units</span>` : ''}
+        <span style="flex:1;"></span>
+        <button class="btn btn-ghost btn-sm" onclick="deleteKB(${i.id})">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openKBModal() {
+  kbEditId = null;
+  document.getElementById('kb-brand').value = '';
+  document.getElementById('kb-content').value = '';
+  document.getElementById('kb-img').value = '';
+  document.getElementById('kb-count').value = '';
+  openModal('kb-modal');
+}
+
+async function saveKBItem() {
+  const payload = {
+    category: document.getElementById('kb-cat').value,
+    brand: document.getElementById('kb-brand').value.trim(),
+    in_stock: document.getElementById('kb-stock').value === '1',
+    stock_count: document.getElementById('kb-count').value || null,
+    image_url: document.getElementById('kb-img').value.trim() || null,
+    content: document.getElementById('kb-content').value.trim(),
+  };
+  if (!payload.brand || !payload.content) return toast('Brand and content are required', 'error');
+  const res = await fetch('/api/kb', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  const d = await res.json();
+  if (d.ok) { toast('Product added!'); closeModal('kb-modal'); loadKB(); }
+  else toast(d.error || 'Failed', 'error');
+}
+
+async function deleteKB(id) {
+  if (!confirm('Delete this product?')) return;
+  await fetch(`/api/kb/${id}`, { method:'DELETE' });
+  toast('Product deleted');
+  loadKB();
+}
+
+// ── Customer Modal ────────────────────────────────────────────────────────────
+function openAddCustomerModal() { openModal('cust-modal'); }
+async function createCustomer() {
+  const phone = document.getElementById('new-cust-phone').value.trim();
+  const name  = document.getElementById('new-cust-name').value.trim();
+  if (!phone) return toast('Phone number required', 'error');
+  const sid = 'wa-' + phone.replace(/\D/g,'');
+  await fetch('/api/copilot/log-message', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ session_id: sid, message: 'New customer added', role:'seller' })
   });
-  
-  // Decide recommendation based on state
-  let recommended = 'pulse';
-  if (customer.followup_sent === 1) {
-    recommended = 'discount'; // Closer recommended next since pulse is sent
+  if (name) {
+    await fetch('/api/save', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ session_prefix: sid.slice(0,8), name, phone })
+    });
   }
-  
-  const btn = document.getElementById(`strat-${recommended}`);
-  if (btn) {
-    btn.classList.add('recommended');
-  }
-  
-  // Automatically trigger recommendation for fresh select
-  selectStrategy(recommended);
+  toast('Customer created!');
+  closeModal('cust-modal');
+  loadCustomerList();
 }
 
-// Startup
-window.onload = () => {
-  loadCustomTemplates();
-  loadAll();
-};
+// ── WA Settings ───────────────────────────────────────────────────────────────
+async function loadWASettings() {
+  const res = await fetch('/api/whatsapp-settings');
+  const d = await res.json();
+  document.getElementById('wa-phone-id').value = d.phone_number_id || '';
+  document.getElementById('wa-token').value    = d.access_token || '';
+  document.getElementById('wa-verify').value   = d.verify_token || 'helloagain_token_2026';
+  document.getElementById('wa-webhook').value  = d.webhook_url || '';
+}
+async function saveWASettings() {
+  const payload = {
+    phone_number_id: document.getElementById('wa-phone-id').value,
+    access_token:    document.getElementById('wa-token').value,
+    verify_token:    document.getElementById('wa-verify').value,
+  };
+  const res = await fetch('/api/whatsapp-settings', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const d = await res.json();
+  if (d.ok) toast('Settings saved!');
+  else toast('Failed to save', 'error');
+}
+
+// ── Customer detail (from Customers page) ─────────────────────────────────────
+async function loadCustDetail(sessionPrefix, el) {
+  document.querySelectorAll('.customer-item').forEach(i => i.classList.remove('selected'));
+  if (el) el.classList.add('selected');
+  const res = await fetch(`/api/customer/${sessionPrefix}`);
+  if (!res.ok) return;
+  const data = await res.json();
+  const c = data.customer;
+  const msgs = data.messages;
+  const stageRes = await fetch(`/api/copilot/customer/${sessionPrefix}/stage`);
+  const stageData = stageRes.ok ? await stageRes.json() : {};
+
+  const name = c.name || c.session_id.slice(0,8);
+  const col  = avatarColor(name);
+
+  document.getElementById('cust-detail-wrap').innerHTML = `
+    <div style="padding:24px;">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+        <div style="width:56px;height:56px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;">${avatarInitials(name)}</div>
+        <div>
+          <div style="font-size:18px;font-weight:800;">${name}</div>
+          <div style="font-size:13px;color:var(--text-muted);">${c.phone || 'No phone'} · ${(stageData.stage||'new_lead').replace('_',' ')}</div>
+        </div>
+        <div style="margin-left:auto;text-align:right;">
+          <div style="font-size:28px;font-weight:800;color:${healthColor(stageData.health_score||0)}">❤ ${stageData.health_score||0}</div>
+          <div style="font-size:11px;color:var(--text-dim);">Health Score</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;">
+          <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">TURNS</div>
+          <div style="font-weight:700;">${c.turn_count || 0}</div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;">
+          <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">BUDGET</div>
+          <div style="font-weight:700;">${c.budget || '–'}</div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;">
+          <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">TOPIC</div>
+          <div style="font-weight:700;">${c.topic || '–'}</div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;">
+          <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px;">LAST SEEN</div>
+          <div style="font-weight:700;">${fmtDate(c.last_seen)}</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-bottom:20px;">
+        <button class="btn btn-primary btn-sm" onclick="selectedSession='${c.session_id}';selectedSessionPrefix='${sessionPrefix}';runAIAnalysis().then(()=>showPage('copilot',document.querySelector('[data-page=copilot]')))">
+          🧠 Analyze & Get Actions
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="exportCustomer('${sessionPrefix}')">📤 Export</button>
+      </div>
+
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text-muted);">RECENT MESSAGES</div>
+      <div style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;">
+        ${(msgs||[]).slice(-10).map(m => `
+          <div style="display:flex;flex-direction:column;align-items:${m.role==='user'?'flex-start':'flex-end'}">
+            <div style="font-size:11px;color:var(--text-dim);margin-bottom:3px;">${m.role==='user'?'👤 Customer':'🧑‍💼 Seller'} · ${fmtTime(m.ts)}</div>
+            <div class="msg-bubble ${m.role==='user'?'msg-customer':'msg-seller'}" style="max-width:85%">${m.content}</div>
+          </div>
+        `).join('') || '<div style="color:var(--text-dim);font-size:13px;">No messages yet</div>'}
+      </div>
+    </div>
+  `;
+}
+
+// ── Refresh All ───────────────────────────────────────────────────────────────
+function refreshAll() {
+  const active = document.querySelector('.nav-item.active');
+  if (active) active.click();
+}
+
+// ── Initial Load ──────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  loadSignals();
+  loadCustomerList();
+  // Auto-refresh signals every 60 seconds
+  setInterval(loadSignals, 60000);
+});
 </script>
 </body>
 </html>

@@ -221,7 +221,7 @@ def init_db():
         row = con.execute("SELECT COUNT(*) FROM knowledge_base").fetchone()
         if row[0] == 0:
             try:
-                from knowledge_base import business_data
+                from knowledge.knowledge_base import business_data
                 for item in business_data:
                     con.execute(
                         """INSERT INTO knowledge_base (category, brand, in_stock, stock_count, image_url, content)
